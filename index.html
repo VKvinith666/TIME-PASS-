@@ -269,8 +269,14 @@ let db = null; let auth = null;
 
 function updateCloudBadge(isConnected, email = "", errorMessage = "") {
     const badge = document.getElementById('cloudStatusBadge'); if(!badge) return;
-    if(isConnected) { badge.style.background = "#4caf50"; badge.innerHTML = `🟢 LIVE SYNC <span style="font-weight:normal; font-size:0.9em;">(${email.split('@')[0]})</span>`; } 
-    else { badge.style.background = "#f44336"; badge.innerHTML = `🔴 OFFLINE ${errorMessage ? '- ' + errorMessage : ''}`; }
+    if(isConnected) { 
+        const displayEmail = email ? email.split('@')[0] : 'User';
+        badge.style.background = "#4caf50"; 
+        badge.innerHTML = `🟢 LIVE SYNC <span style="font-weight:normal; font-size:0.9em;">(${displayEmail})</span>`; 
+    } else { 
+        badge.style.background = "#f44336"; 
+        badge.innerHTML = `🔴 OFFLINE ${errorMessage ? '- ' + errorMessage : ''}`; 
+    }
 }
 
 try {
@@ -427,6 +433,9 @@ function saveData() {
     localStorage.setItem('posItems', JSON.stringify(items)); localStorage.setItem('posTransactions', JSON.stringify(transactions)); localStorage.setItem('posShopNotes', JSON.stringify(shopNotes)); localStorage.setItem('posDailyPayNotes', JSON.stringify(dailyPayNotes)); localStorage.setItem('posNextNoteId', nextNoteId); localStorage.setItem('posNextTokenId', nextTokenId); localStorage.setItem('posParkedSales', JSON.stringify(parkedSales)); localStorage.setItem('posNextParkedId', nextParkedId); localStorage.setItem('posExpiryNotes', JSON.stringify(expiryNotes)); localStorage.setItem('posNewArrivalsLog', JSON.stringify(newArrivalsLog)); localStorage.setItem('posNextArrivalId', nextArrivalId); localStorage.setItem('posShifts', JSON.stringify(shifts)); localStorage.setItem('posCurrentShift', JSON.stringify(currentShift)); localStorage.setItem('posNextShiftId', nextShiftId); localStorage.setItem('posBusinessProfile', JSON.stringify(businessProfile)); localStorage.setItem('posWorkers', JSON.stringify(workers)); localStorage.setItem('posAttendanceLog', JSON.stringify(attendanceLog)); localStorage.setItem('posCustomerCredits', JSON.stringify(customerCredits)); localStorage.setItem('posRawMaterials', JSON.stringify(rawMaterials)); localStorage.setItem('posRawMatHistory', JSON.stringify(rawMatHistory));
 }
 
+// =======================================================
+// 5. SETTINGS / LAYOUT / PANELS
+// =======================================================
 function loadLayoutPreference() {
     if (localStorage.getItem('posLayoutPreference') === 'adaptive') document.getElementById('mainContainer').classList.add('adaptive');
     const savedCalcSize = localStorage.getItem('posCalcSize'); if(savedCalcSize) setCalcSize(savedCalcSize);
@@ -437,6 +446,7 @@ function loadFormulaPreference() {
     if(prefStr) { try { const pref = JSON.parse(prefStr); document.getElementById('balanceFormula').value = pref.formula || '1'; document.getElementById('overrideUpiCheckbox').checked = pref.overrideUpi || false; document.getElementById('cfCash').checked = pref.cfCash || false; document.getElementById('cfUPI').checked = pref.cfUPI || false; document.getElementById('cfStart').checked = pref.cfStart || false; document.getElementById('cfPayIn').checked = pref.cfPayIn || false; document.getElementById('cfExp').checked = pref.cfExp || false; } catch(e) {} }
 }
 function saveFormulaPreference() { localStorage.setItem('posFormulaPref', JSON.stringify({ formula: document.getElementById('balanceFormula').value, overrideUpi: document.getElementById('overrideUpiCheckbox').checked, cfCash: document.getElementById('cfCash').checked, cfUPI: document.getElementById('cfUPI').checked, cfStart: document.getElementById('cfStart').checked, cfPayIn: document.getElementById('cfPayIn').checked, cfExp: document.getElementById('cfExp').checked })); }
+
 function toggleLayout() { const container = document.getElementById('mainContainer'); container.classList.toggle('adaptive'); localStorage.setItem('posLayoutPreference', container.classList.contains('adaptive') ? 'adaptive' : 'mobile'); }
 function setCalcSize(size) { document.getElementById('calcContainer').className = 'calc-container calc-size-' + size; localStorage.setItem('posCalcSize', size); }
 
@@ -446,7 +456,7 @@ function togglePanel(panelId) {
     if (panel.classList.contains('panel-open')) {
         panel.classList.remove('panel-open'); setTimeout(() => { panel.style.display = 'none'; }, 400); 
     } else {
-        allPanels.forEach(id => { const p = document.getElementById(id); if (p.classList.contains('panel-open')) { p.classList.remove('panel-open'); p.style.display = 'none'; } });
+        allPanels.forEach(id => { const p = document.getElementById(id); if (p && p.classList.contains('panel-open')) { p.classList.remove('panel-open'); p.style.display = 'none'; } });
         panel.style.display = 'block';
         setTimeout(() => { 
             panel.classList.add('panel-open'); 
@@ -456,8 +466,98 @@ function togglePanel(panelId) {
 }
 function toggleAppFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => { alert(`Error: ${err.message}`); }); else if (document.exitFullscreen) document.exitFullscreen(); }
 
+function previewLogo(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('settingsLogoPreview').src = e.target.result;
+            document.getElementById('settingsLogoPreview').style.display = 'inline-block';
+            businessProfile.logo = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearLogo() {
+    document.getElementById('settingsLogoInput').value = '';
+    document.getElementById('settingsLogoPreview').src = '';
+    document.getElementById('settingsLogoPreview').style.display = 'none';
+    businessProfile.logo = '';
+}
+
+function changeItemViewMode() {
+    businessProfile.itemView = document.getElementById('settingsItemView').value;
+    localStorage.setItem('posBusinessProfile', JSON.stringify(businessProfile));
+    filterItems(); 
+}
+
+function renderSettingsPanel() {
+    document.getElementById('settingsCompanyName').value = businessProfile.companyName || "";
+    document.getElementById('settingsPhone').value = businessProfile.phone || "";
+    document.getElementById('settingsEmail').value = businessProfile.email || "";
+    document.getElementById('settingsAddress').value = businessProfile.address || "";
+    document.getElementById('settingsLicense').value = businessProfile.license || "";
+    document.getElementById('settingsTagline').value = businessProfile.tagline || "";
+    document.getElementById('settingsInsta').value = businessProfile.instagram || "";
+    document.getElementById('settingsFB').value = businessProfile.facebook || "";
+    document.getElementById('settingsLogoSize').value = businessProfile.logoSize || 100;
+    document.getElementById('logoSizeDisplay').innerText = (businessProfile.logoSize || 100) + 'px';
+    document.getElementById('settingsFont').value = businessProfile.receiptFont || "'Courier New', monospace";
+    document.getElementById('settingsItemView').value = businessProfile.itemView || "text";
+    document.getElementById('settingsLang1').value = businessProfile.lang1 || "ta";
+    document.getElementById('settingsLang2').value = businessProfile.lang2 || "hi";
+
+    document.getElementById('setSrSales').checked = businessProfile.srSales !== false;
+    document.getElementById('setSrExp').checked = businessProfile.srExp !== false;
+    document.getElementById('setSrAtt').checked = businessProfile.srAtt !== false;
+    document.getElementById('setSrStock').checked = businessProfile.srStock !== false;
+    document.getElementById('setSrArr').checked = businessProfile.srArr !== false;
+    document.getElementById('setSrChart').checked = businessProfile.srChart !== false;
+    
+    if (businessProfile.logo) {
+        document.getElementById('settingsLogoPreview').src = businessProfile.logo;
+        document.getElementById('settingsLogoPreview').style.display = 'inline-block';
+    } else {
+        document.getElementById('settingsLogoPreview').style.display = 'none';
+    }
+}
+
+function saveSettings() {
+    businessProfile.companyName = document.getElementById('settingsCompanyName').value.trim() || "VK POS";
+    businessProfile.phone = document.getElementById('settingsPhone').value.trim();
+    businessProfile.email = document.getElementById('settingsEmail').value.trim();
+    businessProfile.address = document.getElementById('settingsAddress').value.trim();
+    businessProfile.license = document.getElementById('settingsLicense').value.trim();
+    businessProfile.tagline = document.getElementById('settingsTagline').value.trim() || "Where Every Journey Holds a Secret";
+    businessProfile.instagram = document.getElementById('settingsInsta').value.trim();
+    businessProfile.facebook = document.getElementById('settingsFB').value.trim();
+    businessProfile.logoSize = parseInt(document.getElementById('settingsLogoSize').value) || 100;
+    businessProfile.receiptFont = document.getElementById('settingsFont').value;
+    businessProfile.itemView = document.getElementById('settingsItemView').value;
+    businessProfile.lang1 = document.getElementById('settingsLang1').value;
+    businessProfile.lang2 = document.getElementById('settingsLang2').value;
+    businessProfile.srSales = document.getElementById('setSrSales').checked;
+    businessProfile.srExp = document.getElementById('setSrExp').checked;
+    businessProfile.srAtt = document.getElementById('setSrAtt').checked;
+    businessProfile.srStock = document.getElementById('setSrStock').checked;
+    businessProfile.srArr = document.getElementById('setSrArr').checked;
+    businessProfile.srChart = document.getElementById('setSrChart').checked;
+    
+    if(auth && auth.currentUser) { db.collection("users").doc(auth.currentUser.uid).collection("settings").doc("profile").set(businessProfile); }
+    localStorage.setItem('posBusinessProfile', JSON.stringify(businessProfile)); document.documentElement.style.setProperty('--receipt-font', businessProfile.receiptFont);
+    
+    updateHeaderTitle(); togglePanel('settingsPanel'); alert("System Settings Saved!");
+}
+
+function updateHeaderTitle() {
+    document.getElementById('mainHeaderTitle').innerText = businessProfile.companyName;
+    document.getElementById('printLang1Btn').innerText = `Print Bill (${langNames[businessProfile.lang1] || 'Tamil'}) 🖨️`;
+    document.getElementById('printLang2Btn').innerText = `Print Bill (${langNames[businessProfile.lang2] || 'Hindi'}) 🖨️`;
+}
+
 // =======================================================
-// 5. INVENTORY & ITEMS (TRUE CLOUD)
+// 6. INVENTORY & ITEMS (TRUE CLOUD)
 // =======================================================
 function addNewProduct() { 
     const nameInput = document.getElementById('newPName').value.trim(); const priceInput = parseFloat(document.getElementById('newPPrice').value); const stockInput = parseInt(document.getElementById('newPStock').value); 
@@ -504,7 +604,7 @@ function addExpiryNote(){
 }
 
 // =======================================================
-// 6. POS / CART
+// 7. POS / CART
 // =======================================================
 function scanBarcode() { const code = document.getElementById('searchInput').value.trim(); if (!code) return alert("Enter barcode first."); const item = items.find(i => i.barcode === code); if (item) { addToCart(item.name); document.getElementById('searchInput').value = ''; filterItems(); } else { alert("Barcode not found."); } }
 function filterItems() { const query = document.getElementById('searchInput').value.toLowerCase().trim(); if (query === '') return displayItems([]); displayItems(items.filter(item => item.name.toLowerCase().includes(query) || (item.barcode && item.barcode.includes(query)))); }
@@ -576,7 +676,7 @@ function completeSale(forceBypass = false) {
         const btn = document.getElementById('completeSaleBtn'); const oldText = btn.innerText; btn.innerText = "Insufficient Payment! ⚠️"; btn.style.background = "#f44336"; setTimeout(() => { btn.innerText = oldText; btn.style.background = "#4caf50"; }, 1200); return; 
     }
     
-    // Deduct Inventory in Cloud
+    // Deduct Inventory
     cart.forEach(cartItem => {
         const invItem = items.find(i => i.name === cartItem.name);
         if (invItem) { 
@@ -592,8 +692,16 @@ function completeSale(forceBypass = false) {
     cart = []; document.getElementById('moneyReceived').value = ''; document.getElementById('paymentMethod').value = 'Cash'; updateCart(); 
 }
 
+function renderFavorites() {
+    const favBar = document.getElementById('favoritesBar');
+    const favItems = items.filter(i => i.isFav);
+    if (favItems.length === 0) { favBar.style.display = 'none'; return; }
+    favBar.style.display = 'flex';
+    favBar.innerHTML = favItems.map(item => `<div class="fav-pill" onclick="addToCart('${item.name}')">❤️ ${item.name}</div>`).join('');
+}
+
 // =======================================================
-// 7. PARKED SALES & HISTORY (TRUE CLOUD)
+// 8. PARKED SALES
 // =======================================================
 function updateParkedSalesCount() { document.getElementById('parkedSalesCount').innerText = parkedSales.length; }
 function suspendSale() {
@@ -613,10 +721,38 @@ function recallParkedSale(id) {
     parkedSales.splice(index, 1); updateCart(); updateParkedSalesCount(); togglePanel('parkedSalesPanel');
 }
 
+function renderParkedSalesPanel() {
+    const list = document.getElementById('parkedSalesList'); list.innerHTML = '';
+    parkedSales = parkedSales.filter(sale => sale && sale.id);
+    if (parkedSales.length === 0) { list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No parked/suspended sales found.</p>'; return; }
+    parkedSales.forEach(sale => {
+        const card = document.createElement('div'); card.className = 'parked-sale-card';
+        const totalStr = sale.total ? parseFloat(sale.total).toFixed(2) : "0.00";
+        const itemsArr = sale.items && Array.isArray(sale.items) ? sale.items : [];
+        const itemsStr = itemsArr.length > 0 ? itemsArr.map(i => `${i.name || 'Unknown'} (x${i.quantity || 1})`).join(', ') : "No items";
+        const dateStr = formatDateForDisplay(sale.timestamp);
+        card.innerHTML = `<div class="parked-sale-header"><span>${sale.name || 'Unnamed Sale'}</span><span style="color: #4caf50;">₹${totalStr}</span></div><div class="parked-summary" style="margin-bottom: 10px;">${itemsStr}<br><small style="color: #aaa;">Parked on: ${dateStr}</small></div><div class="parked-sale-controls"><button class="recall-btn" onclick="recallParkedSale(${sale.id})">Recall Sale 🛒</button><button onclick="deleteParkedSale(${sale.id})" style="background: #f44336;">Delete 🗑️</button></div>`;
+        list.appendChild(card);
+    });
+}
+
 function deleteParkedSale(id) {
     if (!confirm("Permanently delete this parked sale?")) return;
     const index = parkedSales.findIndex(s => s.id === id);
     if (index !== -1) { if(parkedSales[index].docId) deleteFromCloud('posParkedSales', parkedSales[index].docId); parkedSales.splice(index, 1); updateParkedSalesCount(); renderParkedSalesPanel(); }
+}
+
+// =======================================================
+// 9. HISTORY
+// =======================================================
+function renderHistoryPanel() {
+    const list = document.getElementById('historyList'); list.innerHTML = '';
+    [...transactions].reverse().forEach((tx, i) => {
+        const originalIndex = transactions.length - 1 - i;
+        const div = document.createElement('div'); div.className = 'transaction-card';
+        div.innerHTML = `<div class="transaction-header"><span>Receipt #${transactions.length-i}</span><span>₹${tx.total.toFixed(2)}</span></div><div style="font-size:0.8em;color:#666;">${tx.items.map(i=>`${i.name} x ${i.quantity}`).join(', ')}</div><div style="font-size:0.8em;color:#aaa;margin-top:4px;">${formatDateForDisplay(tx.timestamp)}</div><div class="history-controls" style="margin-top:10px; display:flex; gap:10px;"><button class="reprint-btn" onclick="printTransactionById(${originalIndex})" style="flex:1;">Reprint 🖨️</button><button class="edit-btn" onclick="editTransaction(${originalIndex})" style="flex:1; background:#ff9800;">Re-Edit ✏️</button></div>`;
+        list.appendChild(div);
+    });
 }
 
 function editTransaction(index) {
@@ -629,7 +765,7 @@ function editTransaction(index) {
 }
 
 // =======================================================
-// 8. SHOP NOTES, DAILY PAY & SHIFTS (TRUE CLOUD)
+// 10. SHOP NOTES, DAILY PAY & SHIFTS
 // =======================================================
 function addBill(){ const d=document.getElementById('billDescription').value, t=parseFloat(document.getElementById('billTotal').value), p=parseFloat(document.getElementById('billPaid').value); if(d&&t){ let obj = {id:nextNoteId++,description:d,total:t,paid:p||0,timestamp:new Date().toISOString(),paymentHistory:p>0?[{amount:p,timestamp:new Date().toISOString(),method:'Initial'}]:[]}; shopNotes.push(obj); pushToCloud('posShopNotes', obj); renderNotesPanel();} }
 function addDailyPayNote(){ const d=document.getElementById('dailyPayDescription').value, a=parseFloat(document.getElementById('dailyPayAmount').value), t=document.getElementById('dailyPayType').value; if(d&&a){ let obj = {id:nextNoteId++,description:d,amount:a,type:t,timestamp:new Date().toISOString()}; dailyPayNotes.push(obj); pushToCloud('posDailyPayNotes', obj); renderNotesPanel(); calculateDailyCashBalance();} }
@@ -660,8 +796,18 @@ function closeShift() {
     printShiftReport(shiftEnd); if (document.getElementById('notesPanel').classList.contains('panel-open')) renderNotesPanel(); alert(`Shift #${shiftEnd.id} closed and pushed to cloud.`);
 }
 
+function updateShiftButtons() {
+    const startBtn = document.getElementById('startShiftBtn'); const closeBtn = document.getElementById('closeShiftBtn');
+    if (currentShift) { startBtn.disabled = true; startBtn.innerText = `Shift #${currentShift.id} Active`; closeBtn.disabled = false; } else { startBtn.disabled = false; startBtn.innerText = `Start Shift 🚀`; closeBtn.disabled = true; }
+}
+
+function renderNotesPanel() { document.getElementById('billsList').innerHTML = shopNotes.map(b => `<div class="bill-card"><div><b>${b.description}</b> <span>₹${b.total}</span></div><div>Paid: ₹${b.paid}</div></div>`).join(''); document.getElementById('dailyPayLog').innerHTML = dailyPayNotes.filter(n=>new Date(n.timestamp).toDateString()===new Date().toDateString()).map(n=>`<div class="daily-pay-record" style="border-left-color:${n.type==='PayIn'?'#4caf50':'#d32f2f'}"><span>${n.description}</span><span>${n.type==='PayIn'?'+':'-'} ${n.amount}</span></div>`).join(''); }
+
+function renderShiftHistoryPanel() { const list = document.getElementById('shiftsList'); list.innerHTML = ''; if (shifts.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No closed shifts.</p>'; [...shifts].reverse().forEach(shift => { const isVariance = Math.abs(shift.summary.cashVariance) > 0.005; const card = document.createElement('div'); card.className = 'shift-card'; card.innerHTML = `<div class="shift-header"><span style="color: #ff5722;">Shift ID: ${shift.id}</span><span style="font-size: 1.1em; color: #3f51b5;">Sales: ₹${shift.summary.totalSales.toFixed(2)}</span></div><div class="parked-summary"><small>Start: ${formatDateForDisplay(shift.startTime)}</small><br><small>End: ${formatDateForDisplay(shift.endTime)}</small><br><small style="font-weight: bold; color: ${isVariance ? '#d32f2f' : '#4caf50'};">Variance: ₹${shift.summary.cashVariance.toFixed(2)}</small></div><div class="shift-controls"><button class="print-shift-btn" onclick="printShiftReportById(${shift.id})">Reprint Report 🖨️</button></div>`; list.appendChild(card); }); }
+function printShiftReportById(shiftId) { const shift = shifts.find(s => s.id === shiftId); if (shift) printShiftReport(shift); }
+
 // =======================================================
-// 9. CREDITS (TRUE CLOUD)
+// 11. CREDITS
 // =======================================================
 function addNewCreditRecord() {
     const name = document.getElementById('newCreditName').value.trim(); const desc = document.getElementById('newCreditDesc').value.trim(); const total = parseFloat(document.getElementById('newCreditTotal').value); const advance = parseFloat(document.getElementById('newCreditAdvance').value) || 0;
@@ -687,8 +833,10 @@ function markCreditRepaid(id) {
 }
 function deleteCredit(id) { const credit = customerCredits.find(c => c.id === id); if(confirm("Delete this credit record?")) { if(credit && credit.docId) deleteFromCloud('posCustomerCredits', credit.docId); customerCredits = customerCredits.filter(c => c.id !== id); } }
 
+function renderCreditsPanel() { const list = document.getElementById('creditsList'); if (!list) return; if (!Array.isArray(customerCredits)) customerCredits = []; const activeCredits = customerCredits.filter(c => c && c.id); if (activeCredits.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No outstanding customer credits.</p>'; let html = ''; activeCredits.forEach(c => { const bal = parseFloat(c.total || 0) - parseFloat(c.advance || 0); const itemsStr = c.items && Array.isArray(c.items) ? c.items.map(i=>`${i.name} x${i.quantity}`).join(', ') : (c.description || 'Manual Credit Log'); html += `<div class="parked-sale-card" style="border-left-color: #e91e63;"><div class="parked-sale-header"><span>💳 ${c.name}</span><span style="color: #e91e63;">Total: ₹${parseFloat(c.total||0).toFixed(2)}</span></div><div class="parked-summary" style="margin-bottom:10px;"><small>${new Date(c.timestamp).toLocaleString()}</small><br>Desc: ${itemsStr}<br><span style="color: #4caf50;">Adv: ₹${parseFloat(c.advance||0).toFixed(2)}</span> | <strong style="color: #d32f2f;">Bal: ₹${bal.toFixed(2)}</strong></div><div class="parked-sale-controls"><button onclick="addMoreCreditToCustomer(${c.id})" style="background:#2196f3; color: white;">Add ➕</button><button onclick="printCustomerCredit(${c.id})" style="background:#ffc107;color:#333;">Print 🖨️</button><button onclick="markCreditRepaid(${c.id})" style="background:#4caf50;">Repaid ✅</button><button onclick="deleteCredit(${c.id})" style="background:#f44336;">Del 🗑️</button></div></div>`; }); list.innerHTML = html; }
+
 // =======================================================
-// 10. WORKERS (TRUE CLOUD)
+// 12. WORKERS
 // =======================================================
 function addNewWorker() {
     const name = document.getElementById('newWorkerName').value.trim(); const age = parseInt(document.getElementById('newWorkerAge').value);
@@ -709,9 +857,10 @@ function clockOutWorker(logId) {
     const now = new Date(); const diffMs = now - new Date(log.timestamp); log.clockOutTime = now.toISOString(); log.status = 'Completed'; log.hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
     if(log.docId) updateInCloud('posAttendanceLog', log.docId, { clockOutTime: log.clockOutTime, status: log.status, hours: log.hours });
 }
+function renderWorkersPanel() { const listDiv = document.getElementById('todayWorkersList'); if (workers.length === 0) return listDiv.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No workers added yet. Add a worker above.</p>'; if (!currentShift) return listDiv.innerHTML = '<p style="text-align: center; font-weight: bold; color: #ff5722; padding: 20px;">⚠️ Please Start a Shift to manage attendance.</p>'; let html = ''; workers.forEach(w => { const log = attendanceLog.find(a => a.workerId === w.id && a.shiftId === currentShift.id); html += `<div style="background: #f9f9f9; padding: 10px; border-left: 4px solid #00bcd4; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;"><span style="flex:1; min-width: 120px;"><b>${w.name}</b> (${w.age}y)</span>`; if (!log) html += `<div style="display: flex; gap: 5px;"><button onclick="clockInWorker(${w.id})" style="background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Present</button><button onclick="markAbsent(${w.id})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Absent</button></div>`; else if (log.status === 'Active') html += `<div style="display: flex; gap: 10px; align-items: center;"><span style="color: #4caf50; font-size: 0.9em;">In: ${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><button onclick="clockOutWorker(${log.id})" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">End Shift</button></div>`; else if (log.status === 'Completed') html += `<span style="color: #00bcd4; font-weight: bold; font-size: 1.1em;">${log.hours.toFixed(2)} Hrs</span>`; else if (log.status === 'Absent') html += `<span style="color: #f44336; font-weight: bold; font-size: 1.1em;">Absent</span>`; html += `</div>`; }); listDiv.innerHTML = html; }
 
 // =======================================================
-// 11. RAW MATERIALS (TRUE CLOUD)
+// 13. RAW MATERIALS
 // =======================================================
 function addRawMaterial() {
     const name = document.getElementById('rawMatName').value.trim(); const unit = document.getElementById('rawMatUnit').value.trim(); const price = parseFloat(document.getElementById('rawMatPrice').value);
@@ -738,53 +887,90 @@ function updateRawMaterialStock() {
         document.getElementById('rawMatAmount').value = ''; document.getElementById('rawMatEntity').value = ''; document.getElementById('rawMatPending').checked = false;
     }
 }
-
-// =======================================================
-// 12. SETTINGS
-// =======================================================
-function renderSettingsPanel() {
-    document.getElementById('settingsCompanyName').value = businessProfile.companyName || ""; document.getElementById('settingsPhone').value = businessProfile.phone || ""; document.getElementById('settingsEmail').value = businessProfile.email || ""; document.getElementById('settingsAddress').value = businessProfile.address || ""; document.getElementById('settingsLicense').value = businessProfile.license || ""; document.getElementById('settingsTagline').value = businessProfile.tagline || ""; document.getElementById('settingsInsta').value = businessProfile.instagram || ""; document.getElementById('settingsFB').value = businessProfile.facebook || ""; document.getElementById('settingsLogoSize').value = businessProfile.logoSize || 100; document.getElementById('logoSizeDisplay').innerText = (businessProfile.logoSize || 100) + 'px'; document.getElementById('settingsFont').value = businessProfile.receiptFont || "'Courier New', monospace"; document.getElementById('settingsItemView').value = businessProfile.itemView || "text"; document.getElementById('settingsLang1').value = businessProfile.lang1 || "ta"; document.getElementById('settingsLang2').value = businessProfile.lang2 || "hi"; document.getElementById('setSrSales').checked = businessProfile.srSales !== false; document.getElementById('setSrExp').checked = businessProfile.srExp !== false; document.getElementById('setSrAtt').checked = businessProfile.srAtt !== false; document.getElementById('setSrStock').checked = businessProfile.srStock !== false; document.getElementById('setSrArr').checked = businessProfile.srArr !== false; document.getElementById('setSrChart').checked = businessProfile.srChart !== false;
-    if (businessProfile.logo) { document.getElementById('settingsLogoPreview').src = businessProfile.logo; document.getElementById('settingsLogoPreview').style.display = 'inline-block'; } else { document.getElementById('settingsLogoPreview').style.display = 'none'; }
+function editRawMaterial(id) {
+    const mat = rawMaterials.find(m => m.id === id);
+    if(mat) {
+        document.getElementById('rawMatName').value = mat.name; document.getElementById('rawMatUnit').value = mat.unit; document.getElementById('rawMatPrice').value = mat.price || 0;
+        editingRawMatId = id; const btn = document.getElementById('addRawMatBtn'); btn.innerText = "💾 Save Changes"; btn.style.background = "#ff9800";
+        document.getElementById('rawMaterialsPanel').scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
-
-function saveSettings() {
-    businessProfile.companyName = document.getElementById('settingsCompanyName').value.trim() || "VK POS"; businessProfile.phone = document.getElementById('settingsPhone').value.trim(); businessProfile.email = document.getElementById('settingsEmail').value.trim(); businessProfile.address = document.getElementById('settingsAddress').value.trim(); businessProfile.license = document.getElementById('settingsLicense').value.trim(); businessProfile.tagline = document.getElementById('settingsTagline').value.trim() || "Where Every Journey Holds a Secret"; businessProfile.instagram = document.getElementById('settingsInsta').value.trim(); businessProfile.facebook = document.getElementById('settingsFB').value.trim(); businessProfile.logoSize = parseInt(document.getElementById('settingsLogoSize').value) || 100; businessProfile.receiptFont = document.getElementById('settingsFont').value; businessProfile.itemView = document.getElementById('settingsItemView').value; businessProfile.lang1 = document.getElementById('settingsLang1').value; businessProfile.lang2 = document.getElementById('settingsLang2').value; businessProfile.srSales = document.getElementById('setSrSales').checked; businessProfile.srExp = document.getElementById('setSrExp').checked; businessProfile.srAtt = document.getElementById('setSrAtt').checked; businessProfile.srStock = document.getElementById('setSrStock').checked; businessProfile.srArr = document.getElementById('setSrArr').checked; businessProfile.srChart = document.getElementById('setSrChart').checked;
-    
-    if(auth && auth.currentUser) { db.collection("users").doc(auth.currentUser.uid).collection("settings").doc("profile").set(businessProfile); }
-    localStorage.setItem('posBusinessProfile', JSON.stringify(businessProfile)); document.documentElement.style.setProperty('--receipt-font', businessProfile.receiptFont);
-    updateHeaderTitle(); togglePanel('settingsPanel'); alert("System Settings Saved!");
-}
-
-// =======================================================
-// 13. RENDER FUNCTIONS (FOR CLOUD SNAPSHOTS)
-// =======================================================
-function renderParkedSalesPanel() { const list = document.getElementById('parkedSalesList'); list.innerHTML = ''; parkedSales = parkedSales.filter(sale => sale && sale.id); if (parkedSales.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No parked/suspended sales found.</p>'; parkedSales.forEach(sale => { const card = document.createElement('div'); card.className = 'parked-sale-card'; const totalStr = sale.total ? parseFloat(sale.total).toFixed(2) : "0.00"; const itemsArr = sale.items && Array.isArray(sale.items) ? sale.items : []; const itemsStr = itemsArr.length > 0 ? itemsArr.map(i => `${i.name || 'Unknown'} (x${i.quantity || 1})`).join(', ') : "No items"; const dateStr = formatDateForDisplay(sale.timestamp); card.innerHTML = `<div class="parked-sale-header"><span>${sale.name || 'Unnamed Sale'}</span><span style="color: #4caf50;">₹${totalStr}</span></div><div class="parked-summary" style="margin-bottom: 10px;">${itemsStr}<br><small style="color: #aaa;">Parked on: ${dateStr}</small></div><div class="parked-sale-controls"><button class="recall-btn" onclick="recallParkedSale(${sale.id})">Recall Sale 🛒</button><button onclick="deleteParkedSale(${sale.id})" style="background: #f44336;">Delete 🗑️</button></div>`; list.appendChild(card); }); }
-function renderHistoryPanel() { const list = document.getElementById('historyList'); list.innerHTML = ''; [...transactions].reverse().forEach((tx, i) => { const originalIndex = transactions.length - 1 - i; const div = document.createElement('div'); div.className = 'transaction-card'; div.innerHTML = `<div class="transaction-header"><span>Receipt #${transactions.length-i}</span><span>₹${tx.total.toFixed(2)}</span></div><div style="font-size:0.8em;color:#666;">${tx.items.map(i=>`${i.name} x ${i.quantity}`).join(', ')}</div><div style="font-size:0.8em;color:#aaa;margin-top:4px;">${formatDateForDisplay(tx.timestamp)}</div><div class="history-controls" style="margin-top:10px; display:flex; gap:10px;"><button class="reprint-btn" onclick="printTransactionById(${originalIndex})" style="flex:1;">Reprint 🖨️</button><button class="edit-btn" onclick="editTransaction(${originalIndex})" style="flex:1; background:#ff9800;">Re-Edit ✏️</button></div>`; list.appendChild(div); }); }
-function renderNotesPanel() { document.getElementById('billsList').innerHTML = shopNotes.map(b => `<div class="bill-card"><div><b>${b.description}</b> <span>₹${b.total}</span></div><div>Paid: ₹${b.paid}</div></div>`).join(''); document.getElementById('dailyPayLog').innerHTML = dailyPayNotes.filter(n=>new Date(n.timestamp).toDateString()===new Date().toDateString()).map(n=>`<div class="daily-pay-record" style="border-left-color:${n.type==='PayIn'?'#4caf50':'#d32f2f'}"><span>${n.description}</span><span>${n.type==='PayIn'?'+':'-'} ${n.amount}</span></div>`).join(''); }
-function renderShiftHistoryPanel() { const list = document.getElementById('shiftsList'); list.innerHTML = ''; if (shifts.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No closed shifts.</p>'; [...shifts].reverse().forEach(shift => { const isVariance = Math.abs(shift.summary.cashVariance) > 0.005; const card = document.createElement('div'); card.className = 'shift-card'; card.innerHTML = `<div class="shift-header"><span style="color: #ff5722;">Shift ID: ${shift.id}</span><span style="font-size: 1.1em; color: #3f51b5;">Sales: ₹${shift.summary.totalSales.toFixed(2)}</span></div><div class="parked-summary"><small>Start: ${formatDateForDisplay(shift.startTime)}</small><br><small>End: ${formatDateForDisplay(shift.endTime)}</small><br><small style="font-weight: bold; color: ${isVariance ? '#d32f2f' : '#4caf50'};">Variance: ₹${shift.summary.cashVariance.toFixed(2)}</small></div><div class="shift-controls"><button class="print-shift-btn" onclick="printShiftReportById(${shift.id})">Reprint Report 🖨️</button></div>`; list.appendChild(card); }); }
-function renderWorkersPanel() { const listDiv = document.getElementById('todayWorkersList'); if (workers.length === 0) return listDiv.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No workers added yet. Add a worker above.</p>'; if (!currentShift) return listDiv.innerHTML = '<p style="text-align: center; font-weight: bold; color: #ff5722; padding: 20px;">⚠️ Please Start a Shift to manage attendance.</p>'; let html = ''; workers.forEach(w => { const log = attendanceLog.find(a => a.workerId === w.id && a.shiftId === currentShift.id); html += `<div style="background: #f9f9f9; padding: 10px; border-left: 4px solid #00bcd4; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;"><span style="flex:1; min-width: 120px;"><b>${w.name}</b> (${w.age}y)</span>`; if (!log) html += `<div style="display: flex; gap: 5px;"><button onclick="clockInWorker(${w.id})" style="background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Present</button><button onclick="markAbsent(${w.id})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Absent</button></div>`; else if (log.status === 'Active') html += `<div style="display: flex; gap: 10px; align-items: center;"><span style="color: #4caf50; font-size: 0.9em;">In: ${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><button onclick="clockOutWorker(${log.id})" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">End Shift</button></div>`; else if (log.status === 'Completed') html += `<span style="color: #00bcd4; font-weight: bold; font-size: 1.1em;">${log.hours.toFixed(2)} Hrs</span>`; else if (log.status === 'Absent') html += `<span style="color: #f44336; font-weight: bold; font-size: 1.1em;">Absent</span>`; html += `</div>`; }); listDiv.innerHTML = html; }
-function renderCreditsPanel() { const list = document.getElementById('creditsList'); if (!list) return; if (!Array.isArray(customerCredits)) customerCredits = []; const activeCredits = customerCredits.filter(c => c && c.id); if (activeCredits.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No outstanding customer credits.</p>'; let html = ''; activeCredits.forEach(c => { const bal = parseFloat(c.total || 0) - parseFloat(c.advance || 0); const itemsStr = c.items && Array.isArray(c.items) ? c.items.map(i=>`${i.name} x${i.quantity}`).join(', ') : (c.description || 'Manual Credit Log'); html += `<div class="parked-sale-card" style="border-left-color: #e91e63;"><div class="parked-sale-header"><span>💳 ${c.name}</span><span style="color: #e91e63;">Total: ₹${parseFloat(c.total||0).toFixed(2)}</span></div><div class="parked-summary" style="margin-bottom:10px;"><small>${new Date(c.timestamp).toLocaleString()}</small><br>Desc: ${itemsStr}<br><span style="color: #4caf50;">Adv: ₹${parseFloat(c.advance||0).toFixed(2)}</span> | <strong style="color: #d32f2f;">Bal: ₹${bal.toFixed(2)}</strong></div><div class="parked-sale-controls"><button onclick="addMoreCreditToCustomer(${c.id})" style="background:#2196f3; color: white;">Add ➕</button><button onclick="printCustomerCredit(${c.id})" style="background:#ffc107;color:#333;">Print 🖨️</button><button onclick="markCreditRepaid(${c.id})" style="background:#4caf50;">Repaid ✅</button><button onclick="deleteCredit(${c.id})" style="background:#f44336;">Del 🗑️</button></div></div>`; }); list.innerHTML = html; }
 function renderRawMaterialsPanel() { const select = document.getElementById('rawMatSelect'); const tbody = document.getElementById('rawMatTableBody'); select.innerHTML = '<option value="">-- Select Material --</option>'; tbody.innerHTML = ''; const selectAllCb = document.getElementById('selectAllRawMats'); if(selectAllCb) selectAllCb.checked = false; let grandTotalIn = 0; let grandTotalOut = 0; let grandCurrentValue = 0; if(rawMaterials.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No raw materials added yet.</td></tr>'; } else { rawMaterials.forEach(mat => { const price = mat.price || 0; const currentVal = mat.stock * price; grandTotalIn += mat.totalIn || 0; grandTotalOut += mat.totalOut || 0; grandCurrentValue += currentVal; select.innerHTML += `<option value="${mat.id}">${mat.name} (${mat.unit})</option>`; tbody.innerHTML += `<tr><td style="text-align:center;"><input type="checkbox" class="raw-mat-check" value="${mat.id}" style="width:18px;height:18px;cursor:pointer;"></td><td><b>${mat.name}</b></td><td style="${mat.stock <= 5 ? 'color: #d32f2f;' : 'color: #4caf50;'} font-weight: bold;">${parseFloat(mat.stock).toFixed(2)} ${mat.unit}</td><td>₹${price.toFixed(2)}</td><td style="color: #3f51b5; font-weight: bold;">₹${currentVal.toFixed(2)}</td><td style="white-space: nowrap;"><button onclick="editRawMaterial(${mat.id})" style="background:#ffc107; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">✏️</button><button onclick="deleteRawMaterial(${mat.id})" style="background:#f44336; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">🗑️</button></td></tr>`; }); } document.getElementById('rawTotalIn').innerText = grandTotalIn.toFixed(2); document.getElementById('rawTotalOut').innerText = grandTotalOut.toFixed(2); document.getElementById('rawCurrentValue').innerText = grandCurrentValue.toFixed(2); }
 function toggleAllRawMats(source) { document.querySelectorAll('.raw-mat-check').forEach(cb => cb.checked = source.checked); }
 
 // =======================================================
-// 14. PRINTING
+// 14. INVENTORY PANEL
 // =======================================================
+function renderInventoryPanel(view='stock') {
+    const panel = document.getElementById('inventoryManagementPanel');
+    const header = `<div class="panel-header"><h4>Inventory 📦</h4><button onclick="togglePanel('inventoryManagementPanel')" class="panel-close-btn">Close ✕</button></div>`;
+    const tabs = `<div style="display:flex;margin-bottom:15px;"><button onclick="renderInventoryPanel('stock')" style="flex:1;padding:10px;background:${view==='stock'?'#00bcd4':'#e0f7fa'};color:${view==='stock'?'white':'#333'};border:none;">Stock Edit</button><button onclick="renderInventoryPanel('arrivals')" style="flex:1;padding:10px;background:${view==='arrivals'?'#4caf50':'#e0f7fa'};color:${view==='arrivals'?'white':'#333'};border:none;">New Arrivals</button><button onclick="renderInventoryPanel('expiry')" style="flex:1;padding:10px;background:${view==='expiry'?'#ff5722':'#e0f7fa'};color:${view==='expiry'?'white':'#333'};border:none;">Expiry</button></div>`;
+    let content = '';
+
+    if (view === 'stock') {
+        const addForm = `<div style="margin-bottom:15px; padding:15px; background:#e8f5e9; border: 2px dashed #4caf50; border-radius: 8px;"><h5 style="margin-top:0; color:#2e7d32;">➕ Add New Item to Database</h5><input id="newPName" placeholder="Item Name (e.g. Burger)" style="width:100%; margin-bottom:5px;"><div style="display:flex; gap:5px;"><input id="newPPrice" type="number" placeholder="Price (₹)" style="flex:1;"><input id="newPStock" type="number" placeholder="Initial Stock" style="flex:1;"></div><button onclick="addNewProduct()" style="width:100%; margin-top:10px; background:#4caf50; color:white; padding:10px; border:none; border-radius:4px; font-weight:bold;">Add Item</button></div>`;
+        const searchBar = `<div style="position:sticky; top:0; z-index:5; background:#fff; padding-bottom:10px;"><input type="text" id="inventorySearchInput" placeholder="🔍 Search Stock items to edit..." onkeyup="filterInventoryList()" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>`;
+        const itemsList = items.map(item => `<div class="inventory-item inventory-item-edit"><div style="font-weight:bold; font-size:1.1em; color:#00bcd4;">${item.name}</div><div class="inventory-inputs" style="display:flex; gap:5px; margin-top:5px; align-items:center;"><span style="font-size:0.9em;">Price: ₹</span><input type="number" value="${item.price}" onchange="updateInventory('${item.name}','price',this.value)" style="flex:1;"><span style="font-size:0.9em;">Stock:</span><input type="number" value="${item.stock}" onchange="updateInventory('${item.name}','stock',this.value)" style="flex:1; font-weight:bold;"></div><input type="text" value="${item.barcode||''}" onchange="updateInventory('${item.name}','barcode',this.value)" placeholder="Barcode" style="width:100%; margin-top:5px; font-size:0.9em; color:#777;"></div>`).join('');
+        content = addForm + searchBar + '<div id="inventoryListContainer">' + itemsList + '</div>';
+    } else if (view === 'arrivals') {
+        content = `<div class="new-arrival-form" style="padding:15px;background:#e8f5e9;border-radius:8px;margin-bottom:15px;">
+            <h5 style="margin-top:0;color:#388e3c;">Log New Stock Arrival 📦+</h5>
+            <input type="text" id="arrivalItemName" placeholder="Item Name (e.g., Bread)" />
+            <input type="number" id="arrivalItemPrice" placeholder="Price (₹)" min="0.01" step="0.01" />
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="number" id="arrivalItemQuantity" placeholder="Quantity/Stock" min="1" step="1" style="flex:1; margin-bottom:0;" />
+                <select id="arrivalMode" style="flex:1; margin-bottom:0;">
+                    <option value="add">➕ Add to Stock</option>
+                    <option value="override">⚠️ Override Stock</option>
+                </select>
+            </div>
+            <input type="number" id="arrivalShelfLife" placeholder="Shelf Life (Days)" min="1" step="1" />
+            <button onclick="addNewProductArrival()">Log Arrival & Update Stock</button>
+        </div>
+        <h5 style="margin-top:0;color:#3f51b5;">Today's Arrivals Log:</h5>
+        <div id="arrivalsLogList">${newArrivalsLog.map(n => `<div class="arrival-log-item"><b>${n.name}</b> x ${n.quantity} @ ₹${n.price} | Shelf: ${n.shelfLifeDays} days</div>`).join('')}${newArrivalsLog.length === 0 ? '<p style="text-align:center;color:#888;">No arrivals logged for this shift.</p>' : ''}</div>`;
+    } else { 
+        content = `<div style="padding:10px;background:#e0f7fa;"><select id="expiryItemName"><option value="">Select</option>${items.map(i=>`<option>${i.name}</option>`).join('')}</select><input type="date" id="arrivalDate"><input type="number" id="shelfLifeDays" value="2"><button onclick="addExpiryNote()">Log Expiry</button></div>` + expiryNotes.map(n => `<div class="inventory-item"><b>${n.itemName}</b><br>Expires: ${n.expiryDate}</div>`).join('');
+    }
+    panel.innerHTML = header + tabs + content;
+}
+
+// =======================================================
+// 15. PRINTING (TAGS, INVOICE, REPORT)
+// =======================================================
+function printPriceTag() {
+    const name = document.getElementById('tagName').value.trim() || "Item Name"; const detail = document.getElementById('tagDetail').value.trim(); const price = parseFloat(document.getElementById('tagPrice').value) || 0; const w = document.getElementById('tagSizeW').value || "50"; const h = document.getElementById('tagSizeH').value || "30";
+    const textSize = parseFloat(document.getElementById('tagTextSize').value) || 24; const detailSize = Math.max(10, textSize * 0.5); const priceSize = Math.max(14, textSize * 1.2);  
+    document.getElementById('receiptOutput').innerHTML = `<div class="price-tag-print" style="width: ${w}mm; height: ${h}mm;"><div style="font-weight: bold; font-size: ${textSize}px; border-bottom: 1px solid #000; width: 100%; padding-bottom: 2px; margin-bottom: 2px; line-height: 1.1;">${name}</div>${detail ? `<div style="font-size: ${detailSize}px; margin: 2px 0;">${detail}</div>` : ''}<div style="font-weight: bold; font-size: ${priceSize}px; margin-top: 2px;">₹${price.toFixed(2)}</div></div>`;
+    setTimeout(() => { window.print(); }, 150);
+}
+function populateTagQuickSelect() { const sel = document.getElementById('tagQuickSelect'); if(!sel) return; sel.innerHTML = '<option value="">-- Custom Manual Entry --</option>' + items.map(i => `<option value="${i.name}">${i.name} (₹${parseFloat(i.price).toFixed(2)})</option>`).join(''); }
+function fillTagFromSelect() { const val = document.getElementById('tagQuickSelect').value; if(!val) return; const item = items.find(i => i.name === val); if(item) { document.getElementById('tagName').value = item.name; document.getElementById('tagPrice').value = parseFloat(item.price).toFixed(2); document.getElementById('tagDetail').value = ""; } }
+function printCustomerCredit(id) { const credit = customerCredits.find(c => c.id === id); if(!credit) return; const bal = parseFloat(credit.total || 0) - parseFloat(credit.advance || 0); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: 100px; height: auto;">` : ''; document.getElementById('receiptOutput').innerHTML = `<div style="width: 100%;"><div class="receipt-header">${logoHtml}<strong>${businessProfile.companyName}</strong><br>CREDIT BILL<br>${new Date(credit.timestamp).toLocaleString()}<br><br><b>CUSTOMER: ${credit.name}</b></div><div class="receipt-separator"></div><div class="receipt-line">${credit.description}<span>₹${parseFloat(credit.total||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>TOTAL:</strong> <span><strong>₹${parseFloat(credit.total||0).toFixed(2)}</strong></span></div><div class="receipt-line" style="color:#555;">Advance Paid: <span>₹${parseFloat(credit.advance||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>BALANCE DUE:</strong> <span><strong>₹${bal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
+function printCustomerInvoice() { const checkboxes = document.querySelectorAll('.raw-mat-check:checked'); if(checkboxes.length === 0) return alert("Select at least one item."); const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value)); const selectedItems = rawMaterials.filter(m => selectedIds.includes(m.id)); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>`; let itemsHtml = `<div style="text-align:center; font-weight:bold; margin-bottom: 5px;">ITEMIZED DETAILS</div><div class="receipt-separator"></div>`; let grandTotal = 0; selectedItems.forEach(mat => { const currentVal = mat.stock * (mat.price || 0); grandTotal += currentVal; itemsHtml += `<div class="receipt-line"><b>${mat.name}</b> <span>₹${currentVal.toFixed(2)}</span></div><div style="font-size: 0.85em; color: #333; text-align: right; margin-bottom: 3px;">${mat.stock.toFixed(2)} ${mat.unit} x ₹${(mat.price||0).toFixed(2)}</div>`; }); document.getElementById('receiptOutput').innerHTML = `<div id="customerInvoiceContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div><div class="receipt-separator"></div><h5 style="text-align:center; margin: 5px 0;">CUSTOMER QUOTATION</h5><div class="receipt-separator"></div>${itemsHtml}<div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>GRAND TOTAL:</strong> <span><strong>₹${grandTotal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
+function printRawMaterialsReport(lang = 'en') { let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>RAW MATERIALS REPORT<br>${new Date().toLocaleString()}`; let financialsHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>FINANCIAL OVERVIEW</h5><div class="receipt-line">Value IN: <span>₹${document.getElementById('rawTotalIn').innerText}</span></div><div class="receipt-line">Value OUT: <span>₹${document.getElementById('rawTotalOut').innerText}</span></div><div class="receipt-line">Current Stock: <span>₹${document.getElementById('rawCurrentValue').innerText}</span></div></div>`; let stockHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>CURRENT INVENTORY</h5>`; rawMaterials.forEach(mat => { stockHtml += `<div class="receipt-line"><b>${mat.name}</b> (${mat.stock.toFixed(2)} ${mat.unit}) <span>₹${(mat.stock * (mat.price || 0)).toFixed(2)}</span></div>`; }); stockHtml += `</div>`; let historyHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>MOVEMENT LOG</h5>`; [...rawMatHistory].reverse().forEach(log => { historyHtml += `<div class="receipt-line" style="font-size:0.85em; border-bottom: 1px dotted #ccc; padding-bottom: 4px;"><div><strong>${log.action}</strong>: ${log.name}<br><small>${new Date(log.timestamp).toLocaleString()}</small></div><div style="text-align:right;"><b>${log.action==='IN'?'+':'-'}${log.amount} ${log.unit}</b></div></div>`; }); historyHtml += `</div>`; document.getElementById('receiptOutput').innerHTML = `<div id="rawMatReportContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div>${financialsHtml}${stockHtml}${historyHtml}<div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
 function printLastTransaction(type = 'bill') { if (transactions.length === 0) return alert("No history."); if (type === 'billLang1') printTransactionById(transactions.length - 1, 'bill', businessProfile.lang1 || 'ta'); else if (type === 'billLang2') printTransactionById(transactions.length - 1, 'bill', businessProfile.lang2 || 'hi'); else printTransactionById(transactions.length - 1, type, 'en'); }
 function printTransactionById(index, type = 'bill', langCode = 'en') { if (index >= 0 && index < transactions.length) { document.getElementById('receiptOutput').innerHTML = (type === 'token') ? printToken(transactions[index]) : printBill(transactions[index], index + 1, langCode); setTimeout(() => { window.print(); }, 150); } }
 function printBill(tx, txId, langCode = 'en') { const t = posTranslations[langCode] || posTranslations['en']; let itemsHtml = tx.items.map(item => `<div class="receipt-line">${item.name} x ${item.quantity}<span>₹${(item.price * item.quantity).toFixed(2)}</span></div>`).join(''); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>`; if (businessProfile.address) bizHeader += `${businessProfile.address}<br>`; if (businessProfile.phone) bizHeader += `Tel: ${businessProfile.phone}<br>`; if (businessProfile.email) bizHeader += `${businessProfile.email}<br>`; if (businessProfile.license) bizHeader += `ID: ${businessProfile.license}<br>`; let socialHtml = ''; if (businessProfile.instagram) socialHtml += `Instagram: ${businessProfile.instagram}<br>`; if (businessProfile.facebook) socialHtml += `Facebook: ${businessProfile.facebook}<br>`; return `<div id="receiptContent" style="width: 100%;"><div class="receipt-header">${bizHeader}${t.receipt} #${txId} | ${t.mode}: ${tx.paymentMethod}<br>${formatDateForReceipt(tx.timestamp)}</div><div class="receipt-separator"></div>${itemsHtml}<div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>${t.total}:</strong> <span><strong>₹${tx.total.toFixed(2)}</strong></span></div><div class="receipt-footer"><br>${socialHtml}${businessProfile.tagline}<br>${t.thankYou}</div><div class="watermark-print">VK_INTERACTIVES</div></div>`; }
 function printToken(tx) { let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let tokenItems = tx.items.map((item, i) => `<div class="token-header">${logoHtml}${businessProfile.companyName}<br>TOKEN #${tx.tokenId}</div><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>${item.name}</span><span>QTY: ${item.quantity}</span></div>${i < tx.items.length-1 ? '<div style="text-align:center;margin:10px 0;">✂︎----------------</div>' : ''}`).join(''); return `<div id="tokenContent" style="width: 100%;">${tokenItems}<div class="watermark-print">VK INTERACTIVES</div></div>`; }
 function printShiftReportById(shiftId) { const shift = shifts.find(s => s.id === shiftId); if (shift) printShiftReport(shift); }
 function printShiftReport(shift) { const formatAmount = (a) => parseFloat(a).toFixed(2); const shiftTransactions = transactions.slice(shift.startTransactionCount, shift.endTransactionCount || undefined); const soldItemsMap = {}; let totalCashFromSales = 0; shiftTransactions.forEach(tx => { tx.items.forEach(item => { if (!soldItemsMap[item.name]) soldItemsMap[item.name] = 0; soldItemsMap[item.name] += item.quantity; }); if (tx.paymentMethod === 'Cash') totalCashFromSales += tx.total; if (tx.paymentMethod === 'Credit') totalCashFromSales += tx.paid; }); const upiValue = shift.summary.upiValue || 0; const upiLabel = shift.summary.isManualUpi ? "Manual UPI" : "Auto UPI (POS)"; let soldItemsHtml = ''; if (businessProfile.srSales) { soldItemsHtml = Object.entries(soldItemsMap).map(([name, qty]) => `<div class="receipt-line">${name} <span>${qty}</span></div>`).join(''); soldItemsHtml = `<div class="shift-report-section"><h5>SALES SUMMARY</h5>${soldItemsHtml}<div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>TOTAL SALES:</strong> <span><strong>₹${formatAmount(shift.summary.totalSales)}</strong></span></div></div>`; } let dailyPayHtml = ''; if (businessProfile.srExp) { let entries = shift.summary.newDailyPayNotes.map(note => `<div class="receipt-line" style="font-size: 0.9em;"><span>${note.description.substring(0, 20)}</span><span>${note.type === 'PayIn' ? '+' : '-'} ₹${formatAmount(note.amount)}</span></div>`).join(''); dailyPayHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>EXPENSES DETAILED</h5>${entries}</div>`; } let newArrivalsHtml = ''; let totalArrivalQty = 0; if (businessProfile.srArr && shift.summary.newArrivals && shift.summary.newArrivals.length > 0) { shift.summary.newArrivals.forEach(arrival => { newArrivalsHtml += `<div class="receipt-line">${arrival.name} <span>${arrival.quantity}</span></div>`; totalArrivalQty += arrival.quantity; }); newArrivalsHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>NEW ARRIVALS</h5>${newArrivalsHtml}<div class="receipt-line" style="font-weight: bold;">TOTAL ADDED: <span>${totalArrivalQty}</span></div></div>`; } let inventoryHtml = ''; if (businessProfile.srStock && shift.endInventorySnapshot && shift.endInventorySnapshot.length > 0) { inventoryHtml += `<div class="receipt-separator"></div><div class="shift-report-section"><h5>CLOSING STOCK</h5>`; shift.endInventorySnapshot.forEach(item => { inventoryHtml += `<div class="receipt-line">${item.name} <span>${item.stock}</span></div>`; }); inventoryHtml += `</div>`; } let dailyPieHtml = ''; if (businessProfile.srChart) { const todayStr = new Date().toDateString(); const yesterdayStr = new Date(Date.now() - 86400000).toDateString(); const todaySalesTotal = transactions.filter(tx => new Date(tx.timestamp).toDateString() === todayStr).reduce((s,tx)=>s+tx.total,0); const yesterdaySalesTotal = transactions.filter(tx => new Date(tx.timestamp).toDateString() === yesterdayStr).reduce((s,tx)=>s+tx.total,0); if(todaySalesTotal > 0 || yesterdaySalesTotal > 0) { const totalSales2Days = todaySalesTotal + yesterdaySalesTotal; const todayPct = (todaySalesTotal / totalSales2Days) * 100; dailyPieHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>DAILY SUMMARY CHART</h5><div style="display:flex; align-items:center; justify-content:center; gap: 15px; margin-top: 5px;"><div class="pie-chart" style="width:70px; height:70px; border-radius:50%; background: conic-gradient(#4caf50 0% ${todayPct}%, #ff9800 ${todayPct}% 100%);"></div><div style="font-size: 0.9em; text-align: left;"><div><span class="pie-color-box" style="background:#4caf50;width:10px;height:10px;display:inline-block;margin-right:4px;"></span> Today: ₹${todaySalesTotal.toFixed(0)}</div><div><span class="pie-color-box" style="background:#ff9800;width:10px;height:10px;display:inline-block;margin-right:4px;"></span> Yest: ₹${yesterdaySalesTotal.toFixed(0)}</div></div></div></div>`; } } let attendanceHtml = ''; if (businessProfile.srAtt) { const shiftAtt = attendanceLog.filter(a => a.shiftId === shift.id); if(shiftAtt.length > 0) { attendanceHtml += `<div class="receipt-separator"></div><div class="shift-report-section"><h5>WORKER ATTENDANCE</h5>`; shiftAtt.forEach(a => { if (a.status === 'Completed') attendanceHtml += `<div class="receipt-line">${a.name} (${a.age}y) <span>${a.hours} Hrs</span></div>`; else if (a.status === 'Active') attendanceHtml += `<div class="receipt-line">${a.name} (${a.age}y) <span>Active</span></div>`; else if (a.status === 'Absent') attendanceHtml += `<div class="receipt-line">${a.name} (${a.age}y) <span>Absent</span></div>`; else if (a.hours > 0) attendanceHtml += `<div class="receipt-line">${a.name} (${a.age}y) <span>${a.hours} Hrs</span></div>`; }); attendanceHtml += `</div>`; } } const absoluteTotal = shift.startingCash + totalCashFromSales + upiValue + shift.summary.totalExpenses; let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; document.getElementById('receiptOutput').innerHTML = `<div id="shiftReportContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${logoHtml}<strong>${businessProfile.companyName}</strong><br>${businessProfile.phone ? 'Tel: '+businessProfile.phone+'<br>' : ''}SHIFT REPORT #${shift.id}<br>Start: ${formatDateForReceipt(shift.startTime)}<br>End: ${formatDateForReceipt(shift.endTime)}</div><div class="receipt-separator"></div>${soldItemsHtml}${dailyPayHtml}<div class="receipt-separator"></div><div class="shift-report-section"><h5>CASH CALCULATION</h5><div class="receipt-line">Start Cash: <span>₹${formatAmount(shift.startingCash)}</span></div><div class="receipt-line">${upiLabel}: <span>₹${formatAmount(upiValue)}</span></div><div class="receipt-line">Cash Sales: <span>₹${formatAmount(totalCashFromSales)}</span></div><div class="receipt-line">Total Expenses: <span>₹${formatAmount(shift.summary.totalExpenses)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>ABS. TOTAL:</strong> <span><strong>₹${formatAmount(absoluteTotal)}</strong></span></div><small style="display:block; text-align:center;">(Start+CashSales+UPI+Exp)</small></div>${dailyPieHtml}${attendanceHtml}${newArrivalsHtml}${inventoryHtml}<div class="receipt-footer">End of Report</div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
-function printCustomerCredit(id) { const credit = customerCredits.find(c => c.id === id); if(!credit) return; const bal = parseFloat(credit.total || 0) - parseFloat(credit.advance || 0); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: 100px; height: auto;">` : ''; document.getElementById('receiptOutput').innerHTML = `<div style="width: 100%;"><div class="receipt-header">${logoHtml}<strong>${businessProfile.companyName}</strong><br>CREDIT BILL<br>${new Date(credit.timestamp).toLocaleString()}<br><br><b>CUSTOMER: ${credit.name}</b></div><div class="receipt-separator"></div><div class="receipt-line">${credit.description}<span>₹${parseFloat(credit.total||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>TOTAL:</strong> <span><strong>₹${parseFloat(credit.total||0).toFixed(2)}</strong></span></div><div class="receipt-line" style="color:#555;">Advance Paid: <span>₹${parseFloat(credit.advance||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>BALANCE DUE:</strong> <span><strong>₹${bal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
-function printCustomerInvoice() { const checkboxes = document.querySelectorAll('.raw-mat-check:checked'); if(checkboxes.length === 0) return alert("Select at least one item."); const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value)); const selectedItems = rawMaterials.filter(m => selectedIds.includes(m.id)); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>`; let itemsHtml = `<div style="text-align:center; font-weight:bold; margin-bottom: 5px;">ITEMIZED DETAILS</div><div class="receipt-separator"></div>`; let grandTotal = 0; selectedItems.forEach(mat => { const currentVal = mat.stock * (mat.price || 0); grandTotal += currentVal; itemsHtml += `<div class="receipt-line"><b>${mat.name}</b> <span>₹${currentVal.toFixed(2)}</span></div><div style="font-size: 0.85em; color: #333; text-align: right; margin-bottom: 3px;">${mat.stock.toFixed(2)} ${mat.unit} x ₹${(mat.price||0).toFixed(2)}</div>`; }); document.getElementById('receiptOutput').innerHTML = `<div id="customerInvoiceContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div><div class="receipt-separator"></div><h5 style="text-align:center; margin: 5px 0;">CUSTOMER QUOTATION</h5><div class="receipt-separator"></div>${itemsHtml}<div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>GRAND TOTAL:</strong> <span><strong>₹${grandTotal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
-function printRawMaterialsReport(lang = 'en') { let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>RAW MATERIALS REPORT<br>${new Date().toLocaleString()}`; let financialsHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>FINANCIAL OVERVIEW</h5><div class="receipt-line">Value IN: <span>₹${document.getElementById('rawTotalIn').innerText}</span></div><div class="receipt-line">Value OUT: <span>₹${document.getElementById('rawTotalOut').innerText}</span></div><div class="receipt-line">Current Stock: <span>₹${document.getElementById('rawCurrentValue').innerText}</span></div></div>`; let stockHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>CURRENT INVENTORY</h5>`; rawMaterials.forEach(mat => { stockHtml += `<div class="receipt-line"><b>${mat.name}</b> (${mat.stock.toFixed(2)} ${mat.unit}) <span>₹${(mat.stock * (mat.price || 0)).toFixed(2)}</span></div>`; }); stockHtml += `</div>`; let historyHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>MOVEMENT LOG</h5>`; [...rawMatHistory].reverse().forEach(log => { historyHtml += `<div class="receipt-line" style="font-size:0.85em; border-bottom: 1px dotted #ccc; padding-bottom: 4px;"><div><strong>${log.action}</strong>: ${log.name}<br><small>${new Date(log.timestamp).toLocaleString()}</small></div><div style="text-align:right;"><b>${log.action==='IN'?'+':'-'}${log.amount} ${log.unit}</b></div></div>`; }); historyHtml += `</div>`; document.getElementById('receiptOutput').innerHTML = `<div id="rawMatReportContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div>${financialsHtml}${stockHtml}${historyHtml}<div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 150); }
 
 // =======================================================
-// 15. CALC, RESET & MISC
+// 16. CALCULATOR & ANALYSIS
 // =======================================================
 function calculateDailyCashBalance() { const today = new Date().toDateString(); const formula = document.getElementById('balanceFormula').value; if (formula === 'custom') document.getElementById('customFormulaGrid').style.display = 'block'; else document.getElementById('customFormulaGrid').style.display = 'none'; const todayTransactions = transactions.filter(t => new Date(t.timestamp).toDateString() === today); const cashSales = todayTransactions.filter(t => t.paymentMethod === 'Cash').reduce((s, t) => s + t.total, 0); const creditAdvances = todayTransactions.filter(t => t.paymentMethod === 'Credit').reduce((s, t) => s + t.paid, 0); const totalPhysicalCashIn = cashSales + creditAdvances; const autoUpiSales = todayTransactions.filter(t => t.paymentMethod === 'UPI').reduce((s, t) => s + t.total, 0); const useManualUpi = document.getElementById('overrideUpiCheckbox').checked; const upiValue = useManualUpi ? (parseFloat(document.getElementById('manualUpiInput').value) || 0) : autoUpiSales; const payIn = dailyPayNotes.filter(n => new Date(n.timestamp).toDateString() === today && n.type === 'PayIn').reduce((s, n) => s + n.amount, 0); const expenses = dailyPayNotes.filter(n => new Date(n.timestamp).toDateString() === today && n.type === 'Expense').reduce((s, n) => s + n.amount, 0); const startingCash = currentShift ? currentShift.startingCash : 0; let net = 0; switch(formula) { case "1": net = totalPhysicalCashIn + payIn - expenses; break; case "2": net = (totalPhysicalCashIn + upiValue) - expenses; break; case "3": net = startingCash + totalPhysicalCashIn - expenses; break; case "4": net = upiValue + totalPhysicalCashIn + startingCash + expenses; break; case "5": net = upiValue - expenses + totalPhysicalCashIn + startingCash; break; case "6": net = (upiValue + totalPhysicalCashIn) - payIn + startingCash; break; case "7": net = (totalPhysicalCashIn + upiValue) - expenses - payIn; break; case "8": net = totalPhysicalCashIn; break; case "custom": net = 0; if(document.getElementById('cfCash').checked) net += totalPhysicalCashIn; if(document.getElementById('cfUPI').checked) net += upiValue; if(document.getElementById('cfStart').checked) net += startingCash; if(document.getElementById('cfPayIn').checked) net += payIn; if(document.getElementById('cfExp').checked) net -= expenses; break; default: net = totalPhysicalCashIn + payIn - expenses; } document.getElementById('dailyCashBalanceResult').innerHTML = `<div class="cash-balance-summary ${net < 0 ? 'negative' : ''}"><span>Calculated Balance:</span><span class="value">₹${Math.abs(net).toFixed(2)}</span></div>`; }
 function resetAllData() { if(confirm("Reset ALL data? THIS CANNOT BE UNDONE!")){ localStorage.clear(); location.reload(); } }
+function getCalcElements() { return { input: document.getElementById('calcInput'), result: document.getElementById('calcResult') }; }
+function updateCalculatorDisplay() { const { input, result: resultEl } = getCalcElements(); input.innerText = currentInput; resultEl.innerText = result; if (input) input.scrollLeft = input.scrollWidth;  }
+function clearDisplay() { currentInput = '0'; result = ''; isCalculated = false; updateCalculatorDisplay(); }
+function deleteLast() { if (currentInput === '0' || isCalculated) { clearDisplay(); return; } currentInput = currentInput.slice(0, -1); if (currentInput.length === 0 || currentInput === '-') currentInput = '0'; calculateIntermediateResult(); }
+function calculateIntermediateResult() { if (isCalculated) return; try { let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/'); const safeExpression = expression.replace(/([+\-*/]\.?|[^0-9.])$/, ''); if (safeExpression.trim().length > 0 && !/[+\-*/]$/.test(currentInput)) { const tempResult = eval(safeExpression); result = isFinite(tempResult) ? tempResult.toFixed(2).replace(/\.00$|0$/, '') : ''; } else { result = ''; } } catch (e) { result = ''; } updateCalculatorDisplay(); }
+function appendToDisplay(value) { if (isCalculated) { if (/[+\-*/]/.test(value)) currentInput = result + value; else currentInput = value; result = ''; isCalculated = false; } else { if (currentInput === '0' && value !== '.' && value !== '(' && value !== ')') currentInput = value; else currentInput += value; } calculateIntermediateResult(); }
+function calculateResult() { try { let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/'); const finalResult = eval(expression.replace(/([+\-*/%]\.?|[^0-9.])$/, '')); if (isFinite(finalResult)) { result = finalResult.toFixed(2).replace(/\.00$|0$/, ''); currentInput = finalResult.toFixed(2).replace(/\.00$|0$/, ''); isCalculated = true; } else { result = 'Error'; currentInput = '0'; } } catch (e) { result = 'Error'; currentInput = '0'; } updateCalculatorDisplay(); }
+function renderProductionPanel() { const container = document.getElementById('productionContent'); container.innerHTML = ''; if (items.length === 0) { container.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No inventory items.</p>'; return; } const salesCountMap = {}; const todayStr = new Date().toDateString(); transactions.forEach(tx => { if (new Date(tx.timestamp).toDateString() !== todayStr) return; tx.items.forEach(i => { if(!salesCountMap[i.name]) salesCountMap[i.name] = 0; salesCountMap[i.name] += i.quantity; }); }); let tableHtml = `<table class="prod-table"><thead><tr><th>Item Name</th><th>Price</th><th>Sold</th><th>Remaining</th><th>Produced</th><th>Sold Val</th><th>Rem Val</th><th>Prod Val</th></tr></thead><tbody>`; let grandTotalSoldVal = 0, grandTotalRemVal = 0, grandTotalProdVal = 0; items.forEach(item => { const soldQty = salesCountMap[item.name] || 0; const producedQty = soldQty + parseInt(item.stock); const soldVal = soldQty * parseFloat(item.price); const remainingVal = parseInt(item.stock) * parseFloat(item.price); const producedVal = producedQty * parseFloat(item.price); grandTotalSoldVal += soldVal; grandTotalRemVal += remainingVal; grandTotalProdVal += producedVal; tableHtml += `<tr><td>${item.name}</td><td>₹${parseFloat(item.price).toFixed(2)}</td><td style="color:#4caf50;">${soldQty}</td><td style="color:#ff9800;">${item.stock}</td><td style="font-weight:bold;">${producedQty}</td><td class="val-cell" style="color:#4caf50;">₹${soldVal.toFixed(2)}</td><td class="val-cell" style="color:#ff9800;">₹${remainingVal.toFixed(2)}</td><td class="val-cell">₹${producedVal.toFixed(2)}</td></tr>`; }); tableHtml += `<tr class="total-prod-row"><td colspan="5" style="text-align: right;">GRAND TOTALS:</td><td style="color:#00695c;">₹${grandTotalSoldVal.toFixed(2)}</td><td style="color:#e65100;">₹${grandTotalRemVal.toFixed(2)}</td><td style="color:#00bcd4;">₹${grandTotalProdVal.toFixed(2)}</td></tr></tbody></table>`; container.innerHTML = tableHtml; }
+function renderAnalysisPanel() { let total = transactions.reduce((s,t)=>s+t.total,0); const now = new Date(); const curM = now.getMonth(); const curY = now.getFullYear(); const pastM = curM === 0 ? 11 : curM - 1; const pastY = curM === 0 ? curY - 1 : curY; let curMSales = 0; let pastMSales = 0; transactions.forEach(tx => { const d = new Date(tx.timestamp); if(d.getMonth() === curM && d.getFullYear() === curY) curMSales += tx.total; if(d.getMonth() === pastM && d.getFullYear() === pastY) pastMSales += tx.total; }); let monthlyPieHtml = ''; const totalMonth = curMSales + pastMSales; if(totalMonth > 0) { const curPct = (curMSales / totalMonth) * 100; monthlyPieHtml = `<div style="display:flex; align-items:center; gap: 15px; margin-top: 15px; padding: 15px; background: #e0f7fa; border-radius: 8px; border: 1px solid #00bcd4;"><div style="width:80px; height:80px; min-width:80px; border-radius:50%; background: conic-gradient(#00bcd4 0% ${curPct}%, #ff5722 ${curPct}% 100%);"></div><div><h5 style="margin:0 0 5px 0; color:#00bcd4;">Monthly Comparison</h5><div style="font-size: 0.9em;"><span style="background:#00bcd4;width:12px;height:12px;display:inline-block;margin-right:5px;"></span> This Month: ₹${curMSales.toFixed(2)}</div><div style="font-size: 0.9em;"><span style="background:#ff5722;width:12px;height:12px;display:inline-block;margin-right:5px;"></span> Last Month: ₹${pastMSales.toFixed(2)}</div></div></div>`; } document.getElementById('analysisContent').innerHTML = `<div class="analysis-stats-grid"><div class="stat-card"><h5>Total Sales Lifetime</h5><p>₹${total.toFixed(2)}</p></div><div class="stat-card"><h5>Tx Count</h5><p>${transactions.length}</p></div></div><div style="padding:15px;background:#e0f7fa;border-radius:8px;"><h5>This Month: ₹${curMSales.toFixed(2)}<br>Last Month: ₹${pastMSales.toFixed(2)}</h5></div>${monthlyPieHtml}<button onclick="resetAllData()" style="width:100%;padding:10px;background:#d32f2f;color:white;border:none;border-radius:6px;margin-top:20px; font-weight:bold;">⚠️ Reset ALL Data</button>`; }
+function closePaymentHistory() { document.getElementById('paymentHistoryModal').classList.remove('panel-open'); setTimeout(() => { document.getElementById('paymentHistoryModal').style.display = 'none'; }, 400); }
 
 </script>
 </body>
