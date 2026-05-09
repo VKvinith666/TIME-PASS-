@@ -86,7 +86,7 @@
     .change-line { font-size: 1.2em; padding: 10px 0; border-top: 2px solid #ccc; margin-top: 10px; } .balance-due { color: #d32f2f; } .change-due { color: #4caf50; } .exact-payment { color: #333; }
 
     /* NUMPAD UI */
-    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
+    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px; }
     .numpad-btn { background: #f0f0f0; border: 1px solid #ccc; padding: 15px; font-size: 1.2em; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
     .numpad-btn:hover { background: #e0e0e0; }
     .numpad-btn.numpad-clear { background: #ffc107; color: #333; }
@@ -218,14 +218,20 @@
             </div>
             <div class="input-line">
                 <span style="font-weight: bold;">Money Received (₹):</span>
-                <input type="number" id="moneyReceived" value="" placeholder="0.00" oninput="calculateChange()" step="0.01" min="0" onfocus="numpadTarget='moneyReceived'">
+                <input type="number" id="moneyReceived" value="" placeholder="0.00" oninput="calculateChange()" step="0.01" min="0">
             </div>
             
-            <div id="cartNumpad" class="numpad-grid" style="display: none;">
-                <button class="numpad-btn" onclick="numpadInput('1')">1</button><button class="numpad-btn" onclick="numpadInput('2')">2</button><button class="numpad-btn" onclick="numpadInput('3')">3</button>
-                <button class="numpad-btn" onclick="numpadInput('4')">4</button><button class="numpad-btn" onclick="numpadInput('5')">5</button><button class="numpad-btn" onclick="numpadInput('6')">6</button>
-                <button class="numpad-btn" onclick="numpadInput('7')">7</button><button class="numpad-btn" onclick="numpadInput('8')">8</button><button class="numpad-btn" onclick="numpadInput('9')">9</button>
-                <button class="numpad-btn numpad-clear" onclick="numpadClear()">C</button><button class="numpad-btn" onclick="numpadInput('0')">0</button><button class="numpad-btn numpad-enter" onclick="handleCompleteSaleClick()">ENT</button>
+            <div id="cartNumpad" style="display: none; flex-direction: column; gap: 5px; margin-top: 10px;">
+                <div style="display:flex; gap:5px;">
+                    <button id="npModeCash" onclick="setNpMode('CASH')" style="flex:1; padding:10px; background:#4caf50; color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">CASH MODE</button>
+                    <button id="npModeQty" onclick="setNpMode('QTY')" style="flex:1; padding:10px; background:#e0e0e0; color:#333; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">QTY MODE</button>
+                </div>
+                <div class="numpad-grid">
+                    <button class="numpad-btn" onclick="numpadInput('1')">1</button><button class="numpad-btn" onclick="numpadInput('2')">2</button><button class="numpad-btn" onclick="numpadInput('3')">3</button>
+                    <button class="numpad-btn" onclick="numpadInput('4')">4</button><button class="numpad-btn" onclick="numpadInput('5')">5</button><button class="numpad-btn" onclick="numpadInput('6')">6</button>
+                    <button class="numpad-btn" onclick="numpadInput('7')">7</button><button class="numpad-btn" onclick="numpadInput('8')">8</button><button class="numpad-btn" onclick="numpadInput('9')">9</button>
+                    <button class="numpad-btn numpad-clear" onclick="numpadClear()">C</button><button class="numpad-btn" onclick="numpadInput('0')">0</button><button class="numpad-btn numpad-enter" onclick="handleCompleteSaleClick()">ENT</button>
+                </div>
             </div>
 
             <div class="total change-line" id="changeLine">
@@ -245,6 +251,8 @@
         </div>
     </div>
 </div>
+
+<div id="historyPanel"><div class="panel-header"><h4>Transaction History 📜</h4><button onclick="togglePanel('historyPanel')" class="panel-close-btn">Close ✕</button></div><div id="historyList"></div></div>
 
 <div id="tagsPanel"><div class="panel-header"><h4>Price Tag Generator 🏷️</h4><button onclick="togglePanel('tagsPanel')" class="panel-close-btn">Close ✕</button></div><div style="padding: 15px;"><div style="background: #e0f7fa; padding: 15px; border-radius: 8px; border: 1px solid #00bcd4; margin-bottom: 20px;"><h5 style="margin-top: 0; color: #00bcd4;">Create Price Tag</h5><label style="font-size: 0.8em; font-weight: bold;">Quick Fill from Items:</label><select id="tagQuickSelect" onchange="fillTagFromSelect()" style="width:100%; margin-bottom:15px; padding:10px; border-radius: 4px; border: 1px solid #ccc; background: #fff;"><option value="">-- Custom Manual Entry --</option></select><input type="text" id="tagName" placeholder="Item Name" style="width:100%; margin-bottom:10px; padding:10px; border-radius: 4px; border: 1px solid #ccc;"><input type="text" id="tagDetail" placeholder="Optional Detail (e.g. 500g, Large)" style="width:100%; margin-bottom:10px; padding:10px; border-radius: 4px; border: 1px solid #ccc;"><input type="number" id="tagPrice" placeholder="Price (₹)" style="width:100%; margin-bottom:15px; padding:10px; border-radius: 4px; border: 1px solid #ccc;"><label style="font-size: 0.8em; font-weight: bold;">Tag Text Size (px):</label><input type="number" id="tagTextSize" placeholder="24" value="24" style="width:100%; margin-bottom:15px; padding:10px; border-radius: 4px; border: 1px solid #ccc;"><label style="font-size: 0.8em; font-weight: bold;">Print Size (Width x Height in mm):</label><div style="display: flex; gap: 10px; margin-bottom: 15px;"><input type="text" id="tagSizeW" placeholder="50" value="50" style="flex:1; padding:10px; border-radius: 4px; border: 1px solid #ccc;"><span style="align-self: center;">x</span><input type="text" id="tagSizeH" placeholder="30" value="30" style="flex:1; padding:10px; border-radius: 4px; border: 1px solid #ccc;"></div><div style="display: flex; gap: 10px; margin-bottom: 15px;"><div style="flex: 1;"><label style="font-size: 0.8em; font-weight: bold;">Tag Font:</label><select id="tagFont" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #fff;"><option value="Arial, sans-serif">Arial</option><option value="'Courier New', monospace">Courier New</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="'Trebuchet MS', sans-serif">Trebuchet MS</option><option value="Impact, sans-serif">Impact (Bold)</option><option value="'Comic Sans MS', cursive">Comic Sans (Fun)</option><option value="'Brush Script MT', cursive">Brush Script</option></select></div><div style="flex: 1;"><label style="font-size: 0.8em; font-weight: bold;">Border Design:</label><select id="tagBorder" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #fff;"><option value="1px solid #000">Solid Thin</option><option value="3px solid #000">Solid Thick</option><option value="2px dashed #000">Dashed Line</option><option value="2px dotted #000">Dotted Line</option><option value="4px double #000">Double Line</option><option value="2px solid #000; border-radius: 10px;">Rounded Solid</option><option value="2px dashed #000; border-radius: 10px;">Rounded Dashed</option><option value="none">No Border</option></select></div></div><button onclick="printPriceTag()" style="width: 100%; padding: 12px; background: #00bcd4; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Print Tag 🖨️</button></div></div></div>
 
@@ -271,19 +279,18 @@
         <h5 style="color: #607d8b;">🏢 Business Profile (Receipt Data)</h5>
         <label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Company Logo:</label><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;"><input type="file" id="settingsLogoInput" accept="image/*" onchange="previewLogo(event)" style="flex: 1;"><button onclick="clearLogo()" style="padding: 10px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Remove</button></div><div style="text-align: center; margin-bottom: 15px;"><img id="settingsLogoPreview" src="" alt="Logo Preview" style="max-width: 120px; max-height: 80px; display: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px;"></div><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Logo Print Size:</label><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;"><input type="range" id="settingsLogoSize" min="40" max="250" value="100" style="flex: 1;" oninput="document.getElementById('logoSizeDisplay').innerText = this.value + 'px'"><span id="logoSizeDisplay" style="font-weight: bold; min-width: 50px;">100px</span></div><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Receipt Font:</label><select id="settingsFont" style="width: 100%; margin-bottom: 10px; padding: 8px;"><option value="'Courier New', monospace">Courier New (Standard POS)</option><option value="monospace">Monospace</option><option value="'Segoe UI', sans-serif">Segoe UI</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="'Trebuchet MS', sans-serif">Trebuchet MS</option><option value="Impact, sans-serif">Impact (Bold)</option><option value="'Comic Sans MS', cursive">Comic Sans (Fun)</option></select><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Business Name:</label><input type="text" id="settingsCompanyName" placeholder="e.g. My Awesome Shop" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Phone Number:</label><input type="text" id="settingsPhone" placeholder="e.g. +91 9876543210" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Email Address:</label><input type="email" id="settingsEmail" placeholder="e.g. contact@shop.com" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Physical Address:</label><input type="text" id="settingsAddress" placeholder="e.g. 123 Street, City" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">License / Tax ID:</label><input type="text" id="settingsLicense" placeholder="e.g. GSTIN 123456789" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em; margin-top: 15px; color: #e91e63;">Social Media Handles:</label><input type="text" id="settingsInsta" placeholder="Instagram (e.g. @my_shop)" style="width: 100%; margin-bottom: 10px;"><input type="text" id="settingsFB" placeholder="Facebook (e.g. fb.com/myshop)" style="width: 100%; margin-bottom: 15px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Custom Tagline (Footer):</label><input type="text" id="settingsTagline" placeholder="Where Every Journey Holds a Secret" style="width: 100%; margin-bottom: 15px;"><h5 style="color: #607d8b; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px;">🌍 Multi-Language Print Settings</h5><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Print Button 1 Language:</label><select id="settingsLang1" style="width: 100%; margin-bottom: 10px; padding: 8px;"><option value="ta">Tamil (தமிழ்)</option><option value="hi">Hindi (हिंदी)</option><option value="en">English</option><option value="es">Spanish (Español)</option><option value="ar">Arabic (عربي)</option><option value="fr">French (Français)</option></select><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Print Button 2 Language:</label><select id="settingsLang2" style="width: 100%; margin-bottom: 15px; padding: 8px;"><option value="hi">Hindi (हिंदी)</option><option value="ta">Tamil (தமிழ்)</option><option value="en">English</option><option value="es">Spanish (Español)</option><option value="ar">Arabic (عربي)</option><option value="fr">French (Français)</option></select><h5 style="color: #607d8b; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px;">🖨️ Shift Report Print Toggles</h5><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f0f8ff; padding: 15px; border-radius: 8px;"><label><input type="checkbox" id="setSrSales"> Show Sales Summary</label><label><input type="checkbox" id="setSrExp"> Show Expenses</label><label><input type="checkbox" id="setSrAtt"> Show Attendance</label><label><input type="checkbox" id="setSrStock"> Show Closing Stock</label><label><input type="checkbox" id="setSrArr"> Show New Arrivals</label><label><input type="checkbox" id="setSrChart"> Show Daily Chart</label></div>
         <button onclick="saveSettings()" style="width: 100%; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 6px; font-weight: bold; cursor:pointer;">Save Settings 💾</button>
-        <div class="software-info-box"><h6>Software Information</h6><div class="software-info-row"><span>Version</span><span style="font-weight:bold;">v15.3.0-TrueCloud</span></div><div class="software-info-row"><span>Developer</span><span><a href="https://vkinteractives.com" target="_blank" class="software-link">Vkinteractives.com</a></span></div><div class="software-info-row"><span>System Status</span><span style="color: #00bcd4; font-weight: bold;">Google Cloud Sync Active</span></div><div style="margin-top: 15px; font-size: 0.75em; color: #bbb;">© 2026 VK_INTERACTIVES. All Rights Reserved.</div><button onclick="logoutOfCloud()" style="width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px;">Logout of Cloud 🔒</button></div>
+        <div class="software-info-box"><h6>Software Information</h6><div class="software-info-row"><span>Version</span><span style="font-weight:bold;">v15.4.0-TrueCloud</span></div><div class="software-info-row"><span>Developer</span><span><a href="https://vkinteractives.com" target="_blank" class="software-link">Vkinteractives.com</a></span></div><div class="software-info-row"><span>System Status</span><span style="color: #00bcd4; font-weight: bold;">Google Cloud Sync Active</span></div><div style="margin-top: 15px; font-size: 0.75em; color: #bbb;">© 2026 VK_INTERACTIVES. All Rights Reserved.</div><button onclick="logoutOfCloud()" style="width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px;">Logout of Cloud 🔒</button></div>
     </div>
 </div>
 
 <div id="updatesModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:10001; justify-content:center; align-items:center; backdrop-filter: blur(3px);">
     <div style="background:#fff; width:90%; max-width:400px; border-radius:12px; padding:25px; box-shadow:0 15px 35px rgba(0,0,0,0.2); max-height:85vh; overflow-y:auto; position:relative;">
-        <h3 style="color:#03a9f4; margin-top:0; border-bottom:2px solid #e0f7fa; padding-bottom:10px;">🚀 What's New in v15.3</h3>
+        <h3 style="color:#03a9f4; margin-top:0; border-bottom:2px solid #e0f7fa; padding-bottom:10px;">🚀 What's New in v15.4</h3>
         <ul style="padding-left: 20px; color:#444; font-size:0.95em; line-height:1.6;">
-            <li style="margin-bottom: 8px;"><b>Cloud Image Support:</b> Add item pictures directly to Firebase Storage.</li>
-            <li style="margin-bottom: 8px;"><b>Expiry Integration:</b> Shelf-life is now tracked on main grid!</li>
-            <li style="margin-bottom: 8px;"><b>Detailed Receipts:</b> Unit prices are now clearly printed next to items.</li>
-            <li style="margin-bottom: 8px;"><b>Multi-Language Setup:</b> Add Lang1/Lang2 names in Stock Editor.</li>
-            <li style="margin-bottom: 8px;"><b>Numerical UI:</b> Enable the rapid keypad in System Settings!</li>
+            <li style="margin-bottom: 8px;"><b>History Restored:</b> The missing history panel is fully back online.</li>
+            <li style="margin-bottom: 8px;"><b>Smart Printing:</b> Hitting "Print" now accurately prints your CURRENT cart instead of previous items.</li>
+            <li style="margin-bottom: 8px;"><b>QTY Numpad Toggle:</b> Switch the numpad to QTY Mode to rapidly type in bulk item quantities!</li>
+            <li style="margin-bottom: 8px;"><b>Live Shift Sync:</b> Starting a shift now syncs instantly across all devices.</li>
         </ul>
         <button onclick="document.getElementById('updatesModal').style.display='none'" style="width:100%; padding:12px; background:#f44336; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:15px;">Awesome, Let's Go!</button>
     </div>
@@ -412,6 +419,19 @@ function startCloudListeners() {
     if(!auth || !auth.currentUser) return;
     const uid = auth.currentUser.uid;
     
+    // Live Shift Sync
+    db.collection("users").doc(uid).collection("posLive").doc("currentShift").onSnapshot(doc => {
+        if(doc.exists) {
+            currentShift = doc.data();
+            localStorage.setItem('posCurrentShift', JSON.stringify(currentShift));
+        } else {
+            currentShift = null;
+            localStorage.removeItem('posCurrentShift');
+        }
+        updateShiftButtons();
+        if (document.getElementById('workersPanel').classList.contains('panel-open')) renderWorkersPanel();
+    });
+
     const cols = [
         { name: 'posItems', key: 'posItems', set: (v) => { items = v; filterItems(); renderFavorites(); } },
         { name: 'posTransactions', key: 'posTransactions', set: (v) => { transactions = v; renderHistoryPanel(); } },
@@ -481,7 +501,10 @@ function startCloudListeners() {
 let items = []; let cart = []; let transactions = []; let shopNotes = []; let dailyPayNotes = []; let parkedSales = []; let newArrivalsLog = []; let shifts = []; let currentShift = null; let workers = []; let attendanceLog = []; let customerCredits = []; let rawMaterials = []; let rawMatHistory = []; let editingRawMatId = null; 
 let nextNoteId = 1; let nextTokenId = 1; let nextParkedId = 1; let nextShiftId = 1; let nextArrivalId = 1; 
 let currentInput = '0'; let result = ''; let isCalculated = false; let saleTapCount = 0; let saleTapTimer;
-let numpadTarget = 'moneyReceived';
+
+// NUMPAD VARS
+let npMode = 'CASH'; 
+let npTypedQty = "";
 
 let businessProfile = { companyName: "VK POS", phone: "", email: "", address: "", license: "", tagline: "Where Every Journey Holds a Secret", logo: "", logoSize: 100, receiptFont: "'Courier New', monospace", itemView: 'text', instagram: "", facebook: "", lang1: "ta", lang2: "hi", srSales: true, srExp: true, srAtt: true, srStock: true, srArr: true, srChart: true, numPadEnabled: false };
 const langNames = { 'en': 'English', 'ta': 'Tamil', 'hi': 'Hindi', 'es': 'Spanish', 'ar': 'Arabic', 'fr': 'French' };
@@ -598,21 +621,59 @@ function changeItemViewMode() {
 
 function toggleNumpadUI() {
     const np = document.getElementById('cartNumpad');
-    if (np) {
-        np.style.display = businessProfile.numPadEnabled ? 'grid' : 'none';
+    if (np) { np.style.display = businessProfile.numPadEnabled ? 'flex' : 'none'; }
+}
+
+function setNpMode(mode) {
+    npMode = mode;
+    if(mode === 'CASH') {
+        document.getElementById('npModeCash').style.background = '#4caf50'; document.getElementById('npModeCash').style.color = 'white';
+        document.getElementById('npModeQty').style.background = '#e0e0e0'; document.getElementById('npModeQty').style.color = '#333';
+    } else {
+        document.getElementById('npModeQty').style.background = '#ff9800'; document.getElementById('npModeQty').style.color = 'white';
+        document.getElementById('npModeCash').style.background = '#e0e0e0'; document.getElementById('npModeCash').style.color = '#333';
+        npTypedQty = ""; 
     }
 }
 
 function numpadInput(val) {
-    if (!numpadTarget) return;
-    const el = document.getElementById(numpadTarget);
-    if(el) { el.value = el.value + val; calculateChange(); }
+    if(npMode === 'CASH') {
+        const el = document.getElementById('moneyReceived');
+        if(el) { el.value = el.value + val; calculateChange(); }
+    } else {
+        if(cart.length === 0) return showToast("Cart is empty!", "error");
+        npTypedQty += val;
+        cart[cart.length - 1].quantity = parseInt(npTypedQty) || 1;
+        updateCartQuiet(); 
+    }
 }
+
 function numpadClear() {
-    if (!numpadTarget) return;
-    const el = document.getElementById(numpadTarget);
-    if(el) { el.value = ""; calculateChange(); }
+    if(npMode === 'CASH') {
+        const el = document.getElementById('moneyReceived');
+        if(el) { el.value = ""; calculateChange(); }
+    } else {
+        if(cart.length === 0) return;
+        npTypedQty = "";
+        cart[cart.length - 1].quantity = 1;
+        updateCartQuiet();
+    }
 }
+
+function updateCartQuiet() {
+    // Standard update without resetting typed QTY
+    const cartItems = document.getElementById('cartItems'); cartItems.innerHTML = ''; let grandTotal = 0;
+    cart.forEach((item, index) => {
+        const subTotal = parseFloat(item.price) * item.quantity; grandTotal += subTotal;
+        const div = document.createElement('div'); div.className = 'cart-item';
+        div.innerHTML = `<div class="item-details">${item.name} (₹${item.price.toFixed(2)}) x ${item.quantity} = ₹${subTotal.toFixed(2)}</div><div class="qty-controls"><button onclick="updateQuantity(${index}, -1)">–</button><button onclick="updateQuantity(${index}, 1)">+</button></div>`;
+        cartItems.appendChild(div);
+    });
+    document.getElementById('subTotal').innerText = grandTotal.toFixed(2);
+    document.getElementById('completeSaleBtn').disabled = cart.length === 0; document.getElementById('suspendSaleBtn').disabled = cart.length === 0;
+    calculateChange(); filterItems();
+}
+
 
 function renderSettingsPanel() {
     document.getElementById('settingsCompanyName').value = businessProfile.companyName || "";
@@ -840,6 +901,9 @@ function displayItems(list) {
 function addToCart(itemName) {
     const cartIndex = cart.findIndex(item => item.name === itemName); const itemDetails = items.find(item => item.name === itemName);
     if (!itemDetails) return; if (itemDetails.stock <= 0) return showToast("❌ Out of stock.", "error"); if (getCartQuantity(itemName) >= itemDetails.stock) return showToast(`⚠️ Only ${itemDetails.stock} in stock.`, "error");
+    
+    npTypedQty = ""; // Reset typed QTY when a new item is added
+
     if (cartIndex > -1) cart[cartIndex].quantity += 1; else cart.push({...itemDetails, price: parseFloat(itemDetails.price), quantity: 1});
     updateCart();
 }
@@ -988,8 +1052,16 @@ function addDailyPayNote(){ const d=document.getElementById('dailyPayDescription
 
 function startShift() {
     if (currentShift) return; const startingCashInput = prompt("Enter starting cash (₹):", "500.00"); if (startingCashInput === null) return; 
+    
     currentShift = { id: nextShiftId++, startTime: new Date().toISOString(), startingCash: parseFloat(startingCashInput) || 0.00, startTransactionCount: transactions.length, startDailyPayNoteCount: dailyPayNotes.length, startArrivalLogCount: newArrivalsLog.length, startInventorySnapshot: items.map(item => ({ name: item.name, stock: item.stock })) };
-    localStorage.setItem('posCurrentShift', JSON.stringify(currentShift)); updateShiftButtons(); if (document.getElementById('workersPanel').classList.contains('panel-open')) renderWorkersPanel(); showToast("🚀 Shift Started!", "success");
+    
+    if(auth && auth.currentUser) {
+        db.collection("users").doc(auth.currentUser.uid).collection("posLive").doc("currentShift").set(currentShift);
+    } else {
+        localStorage.setItem('posCurrentShift', JSON.stringify(currentShift));
+    }
+    
+    updateShiftButtons(); if (document.getElementById('workersPanel').classList.contains('panel-open')) renderWorkersPanel(); showToast("🚀 Shift Started & Synced!", "success");
 }
 
 function closeShift() {
@@ -1007,6 +1079,10 @@ function closeShift() {
     const shiftEnd = { ...currentShift, endTime: new Date().toISOString(), endingCash: endingCash, endTransactionCount: transactions.length, endDailyPayNoteCount: dailyPayNotes.length, endArrivalLogCount: newArrivalsLog.length, endInventorySnapshot: items.map(item => ({ name: item.name, stock: item.stock })), summary: { newTransactionCount: shiftTransactions.length, totalSales, totalCashReceived, totalExpenses, totalPayIn, upiValue: finalUpiValue, isManualUpi: useManualUpi, expectedCash: currentShift.startingCash + totalCashReceived + totalPayIn - totalExpenses, cashVariance: endingCash - (currentShift.startingCash + totalCashReceived + totalPayIn - totalExpenses), newDailyPayNotes, newArrivals } }; 
     
     shifts.push(shiftEnd); pushToCloud('posShifts', shiftEnd);
+    
+    if(auth && auth.currentUser) {
+        db.collection("users").doc(auth.currentUser.uid).collection("posLive").doc("currentShift").delete();
+    }
     currentShift = null; localStorage.removeItem('posCurrentShift'); updateShiftButtons(); document.getElementById('overrideUpiCheckbox').checked = false; document.getElementById('manualUpiInput').value = '';
     
     printShiftReport(shiftEnd); if (document.getElementById('notesPanel').classList.contains('panel-open')) renderNotesPanel(); showToast(`🔒 Shift #${shiftEnd.id} closed and pushed to cloud.`, "success");
@@ -1019,7 +1095,22 @@ function updateShiftButtons() {
 
 function renderNotesPanel() { document.getElementById('billsList').innerHTML = shopNotes.map(b => `<div class="bill-card"><div><b>${b.description}</b> <span>₹${b.total}</span></div><div>Paid: ₹${b.paid}</div></div>`).join(''); document.getElementById('dailyPayLog').innerHTML = dailyPayNotes.filter(n=>new Date(n.timestamp).toDateString()===new Date().toDateString()).map(n=>`<div class="daily-pay-record" style="border-left-color:${n.type==='PayIn'?'#4caf50':'#d32f2f'}"><span>${n.description}</span><span>${n.type==='PayIn'?'+':'-'} ${n.amount}</span></div>`).join(''); }
 
-function renderShiftHistoryPanel() { const list = document.getElementById('shiftsList'); list.innerHTML = ''; if (shifts.length === 0) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No closed shifts.</p>'; [...shifts].reverse().forEach(shift => { const isVariance = Math.abs(shift.summary.cashVariance) > 0.005; const card = document.createElement('div'); card.className = 'shift-card'; card.innerHTML = `<div class="shift-header"><span style="color: #ff5722;">Shift ID: ${shift.id}</span><span style="font-size: 1.1em; color: #3f51b5;">Sales: ₹${shift.summary.totalSales.toFixed(2)}</span></div><div class="parked-summary"><small>Start: ${formatDateForDisplay(shift.startTime)}</small><br><small>End: ${formatDateForDisplay(shift.endTime)}</small><br><small style="font-weight: bold; color: ${isVariance ? '#d32f2f' : '#4caf50'};">Variance: ₹${shift.summary.cashVariance.toFixed(2)}</small></div><div class="shift-controls"><button class="print-shift-btn" onclick="printShiftReportById('${shift.docId || shift.id}')">Reprint Report 🖨️</button></div>`; list.appendChild(card); }); }
+function renderShiftHistoryPanel() { 
+    const list = document.getElementById('shiftsList'); list.innerHTML = ''; 
+    
+    if(currentShift) {
+        list.innerHTML += `<div class="shift-card" style="border-left-color: #4caf50; background: #e8f5e9;"><div class="shift-header"><span style="color: #2e7d32;">🔥 ACTIVE SHIFT #${currentShift.id}</span></div><div class="parked-summary"><small>Started: ${formatDateForDisplay(currentShift.startTime)}</small><br><b>Starting Cash: ₹${currentShift.startingCash.toFixed(2)}</b></div></div>`;
+    }
+    
+    if (shifts.length === 0 && !currentShift) return list.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">No closed shifts.</p>'; 
+    
+    [...shifts].reverse().forEach(shift => { 
+        const isVariance = Math.abs(shift.summary.cashVariance) > 0.005; 
+        const card = document.createElement('div'); card.className = 'shift-card'; 
+        card.innerHTML = `<div class="shift-header"><span style="color: #ff5722;">Shift ID: ${shift.id}</span><span style="font-size: 1.1em; color: #3f51b5;">Sales: ₹${shift.summary.totalSales.toFixed(2)}</span></div><div class="parked-summary"><small>Start: ${formatDateForDisplay(shift.startTime)}</small><br><small>End: ${formatDateForDisplay(shift.endTime)}</small><br><small style="font-weight: bold; color: ${isVariance ? '#d32f2f' : '#4caf50'};">Variance: ₹${shift.summary.cashVariance.toFixed(2)}</small></div><div class="shift-controls"><button class="print-shift-btn" onclick="printShiftReportById('${shift.docId || shift.id}')">Reprint Report 🖨️</button></div>`; 
+        list.appendChild(card); 
+    }); 
+}
 
 function printShiftReportById(id) { const shift = shifts.find(s => s.id === parseInt(id) || s.docId === id); if (shift) printShiftReport(shift); }
 
@@ -1198,8 +1289,35 @@ function fillTagFromSelect() { const val = document.getElementById('tagQuickSele
 function printCustomerCredit(id) { const credit = customerCredits.find(c => c.id === id); if(!credit) return; const bal = parseFloat(credit.total || 0) - parseFloat(credit.advance || 0); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: 100px; height: auto;">` : ''; document.getElementById('receiptOutput').innerHTML = `<div style="width: 100%;"><div class="receipt-header">${logoHtml}<strong>${businessProfile.companyName}</strong><br>CREDIT BILL<br>${new Date(credit.timestamp).toLocaleString()}<br><br><b>CUSTOMER: ${credit.name}</b></div><div class="receipt-separator"></div><div class="receipt-line">${credit.description}<span>₹${parseFloat(credit.total||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>TOTAL:</strong> <span><strong>₹${parseFloat(credit.total||0).toFixed(2)}</strong></span></div><div class="receipt-line" style="color:#555;">Advance Paid: <span>₹${parseFloat(credit.advance||0).toFixed(2)}</span></div><div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>BALANCE DUE:</strong> <span><strong>₹${bal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 200); }
 function printCustomerInvoice() { const checkboxes = document.querySelectorAll('.raw-mat-check:checked'); if(checkboxes.length === 0) return showToast("⚠️ Select at least one item.", "error"); const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value)); const selectedItems = rawMaterials.filter(m => selectedIds.includes(m.id)); let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>`; let itemsHtml = `<div style="text-align:center; font-weight:bold; margin-bottom: 5px;">ITEMIZED DETAILS</div><div class="receipt-separator"></div>`; let grandTotal = 0; selectedItems.forEach(mat => { const currentVal = mat.stock * (mat.price || 0); grandTotal += currentVal; itemsHtml += `<div class="receipt-line"><b>${mat.name}</b> <span>₹${currentVal.toFixed(2)}</span></div><div style="font-size: 0.85em; color: #333; text-align: right; margin-bottom: 3px;">${mat.stock.toFixed(2)} ${mat.unit} x ₹${(mat.price||0).toFixed(2)}</div>`; }); document.getElementById('receiptOutput').innerHTML = `<div id="customerInvoiceContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div><div class="receipt-separator"></div><h5 style="text-align:center; margin: 5px 0;">CUSTOMER QUOTATION</h5><div class="receipt-separator"></div>${itemsHtml}<div class="receipt-separator"></div><div class="receipt-line total-line-print"><strong>GRAND TOTAL:</strong> <span><strong>₹${grandTotal.toFixed(2)}</strong></span></div><div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 200); }
 function printRawMaterialsReport(lang = 'en') { let logoHtml = businessProfile.logo ? `<img src="${businessProfile.logo}" class="print-logo" style="max-width: ${businessProfile.logoSize || 100}px; max-height: ${businessProfile.logoSize || 100}px; width: auto; height: auto;">` : ''; let bizHeader = `${logoHtml}<strong>${businessProfile.companyName}</strong><br>RAW MATERIALS REPORT<br>${new Date().toLocaleString()}`; let financialsHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>FINANCIAL OVERVIEW</h5><div class="receipt-line">Value IN: <span>₹${document.getElementById('rawTotalIn').innerText}</span></div><div class="receipt-line">Value OUT: <span>₹${document.getElementById('rawTotalOut').innerText}</span></div><div class="receipt-line">Current Stock: <span>₹${document.getElementById('rawCurrentValue').innerText}</span></div></div>`; let stockHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>CURRENT INVENTORY</h5>`; rawMaterials.forEach(mat => { stockHtml += `<div class="receipt-line"><b>${mat.name}</b> (${mat.stock.toFixed(2)} ${mat.unit}) <span>₹${(mat.stock * (mat.price || 0)).toFixed(2)}</span></div>`; }); stockHtml += `</div>`; let historyHtml = `<div class="receipt-separator"></div><div class="shift-report-section"><h5>MOVEMENT LOG</h5>`; [...rawMatHistory].reverse().forEach(log => { historyHtml += `<div class="receipt-line" style="font-size:0.85em; border-bottom: 1px dotted #ccc; padding-bottom: 4px;"><div><strong>${log.action}</strong>: ${log.name}<br><small>${new Date(log.timestamp).toLocaleString()}</small></div><div style="text-align:right;"><b>${log.action==='IN'?'+':'-'}${log.amount} ${log.unit}</b></div></div>`; }); historyHtml += `</div>`; document.getElementById('receiptOutput').innerHTML = `<div id="rawMatReportContent" style="width: 100%; max-width: 80mm;"><div class="receipt-header">${bizHeader}</div>${financialsHtml}${stockHtml}${historyHtml}<div class="watermark-print">VK_INTERACTIVES</div></div>`; setTimeout(() => { window.print(); }, 200); }
-function printLastTransaction(type = 'bill') { if (transactions.length === 0) return showToast("⚠️ No history.", "error"); const lastTx = transactions[transactions.length - 1]; const id = lastTx.docId || lastTx.tokenId; if (type === 'billLang1') printTransactionById(id, 'bill', businessProfile.lang1 || 'ta'); else if (type === 'billLang2') printTransactionById(id, 'bill', businessProfile.lang2 || 'hi'); else printTransactionById(id, type, 'en'); }
+
+function printLastTransaction(type = 'bill') { 
+    let langCode = 'en';
+    if (type === 'billLang1') { langCode = businessProfile.lang1 || 'ta'; type = 'bill'; }
+    if (type === 'billLang2') { langCode = businessProfile.lang2 || 'hi'; type = 'bill'; }
+
+    // If there is an active cart, print the current cart instead of history
+    if (cart.length > 0) {
+        let grandTotal = cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
+        let fakeTx = {
+            items: cart,
+            total: grandTotal,
+            paymentMethod: document.getElementById('paymentMethod').value || "Pending",
+            timestamp: new Date().toISOString(),
+            tokenId: "CURRENT"
+        };
+        document.getElementById('receiptOutput').innerHTML = (type === 'token') ? printToken(fakeTx) : printBill(fakeTx, "EST", langCode);
+        setTimeout(() => { window.print(); }, 200);
+        return;
+    }
+
+    if (transactions.length === 0) return showToast("⚠️ No history.", "error"); 
+    const lastTx = transactions[transactions.length - 1]; 
+    const id = lastTx.docId || lastTx.tokenId; 
+    printTransactionById(id, type, langCode); 
+}
+
 function printTransactionById(id, type = 'bill', langCode = 'en') { const tx = transactions.find(t => t.docId === id || t.tokenId == id); if (tx) { document.getElementById('receiptOutput').innerHTML = (type === 'token') ? printToken(tx) : printBill(tx, tx.tokenId, langCode); setTimeout(() => { window.print(); }, 200); } else { showToast("⚠️ Transaction not found.", "error"); } }
+
 function printBill(tx, txId, langCode = 'en') { 
     const t = posTranslations[langCode] || posTranslations['en']; 
     let itemsHtml = tx.items.map(item => {
@@ -1327,4 +1445,3 @@ function closePaymentHistory() { document.getElementById('paymentHistoryModal').
 </script>
 </body>
 </html>
-
