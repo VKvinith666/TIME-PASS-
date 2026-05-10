@@ -14,7 +14,7 @@
 
 <style>
     :root { --receipt-font: 'Courier New', monospace; }
-    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f0f8ff, #ffffff, #e0ffff); background-attachment: fixed; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; position: relative; }
+    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f0f8ff, #ffffff, #e0ffff); background-attachment: fixed; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; position: relative; overflow-x: hidden; }
     
     /* PROFESSIONAL TOAST NOTIFICATIONS */
     #toastContainer { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -33,33 +33,52 @@
     .splash-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     
     .watermark-ui { position: fixed; bottom: 5px; right: 10px; font-size: 0.8em; font-weight: bold; color: rgba(0, 0, 0, 0.3); pointer-events: none; z-index: 5; font-family: monospace; }
+    
+    /* SIDEBAR STYLES */
+    #sidebar { position: fixed; top: 0; left: -280px; width: 270px; height: 100vh; background: #ffffff; z-index: 1000000; transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 5px 0 20px rgba(0,0,0,0.15); overflow-y: auto; display: flex; flex-direction: column; }
+    #sidebar.open { left: 0; }
+    #sidebarOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 999999; display: none; backdrop-filter: blur(2px); transition: opacity 0.3s; }
+    .sidebar-header { padding: 20px; background: #e0f7fa; border-bottom: 3px solid #00bcd4; font-size: 1.2em; font-weight: bold; color: #00bcd4; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; }
+    .sidebar-btn { padding: 16px 20px; border: none; border-bottom: 1px solid #f0f0f0; background: none; text-align: left; font-size: 1.05em; color: #444; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 600; transition: background 0.2s, color 0.2s; }
+    .sidebar-btn:hover { background: #f5f5f5; color: #00bcd4; padding-left: 25px; }
+    .sidebar-btn.premium-btn { color: #e91e63; border-left: 4px solid #e91e63; }
+    .sidebar-btn.premium-btn:hover { background: #fce4ec; color: #c2185b; }
+    .sidebar-btn.shift-btn-start { color: #4caf50; border-left: 4px solid #4caf50; }
+    .sidebar-btn.shift-btn-close { color: #f44336; border-left: 4px solid #f44336; }
+    
+    /* THIN UNIFIED HEADER UI */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #e0f7fa; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom: 1px solid #00bcd4; position: sticky; top: 0; z-index: 50; gap: 8px; }
+    .hamburger-btn { font-size: 1.4em; background: none; border: none; cursor: pointer; color: #00bcd4; padding: 0 5px; transition: transform 0.2s; }
+    .hamburger-btn:hover { transform: scale(1.1); }
+    #mainHeaderTitle { font-weight: bold; font-size: 1em; color: #00bcd4; white-space: nowrap; }
+    
+    .header-search { flex: 1; display: flex; height: 34px; min-width: 100px; }
+    .header-search input { flex: 1; padding: 0 10px; border: 1px solid #ccc; border-radius: 6px 0 0 6px; outline: none; min-width: 0; font-size: 0.9em; }
+    .header-search .search-btn { padding: 0 12px; border: none; background: #ffc107; border-radius: 0 6px 6px 0; cursor: pointer; }
+    .header-search .scan-btn { padding: 0 10px; border: none; background: #00bcd4; color: white; border-radius: 6px; margin-left: 6px; font-weight: bold; cursor: pointer; }
+    
+    @media (max-width: 450px) {
+        #mainHeaderTitle { display: none !important; } /* Hides title on small phones for bigger search bar */
+    }
+
     .container { max-width: 420px; width: 100%; margin: 0; background: #fff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); overflow: hidden; transition: max-width 0.3s ease-in-out; padding-bottom: 25px; }
     .container.adaptive { max-width: 98vw; border-radius: 8px; margin-top: 10px; margin-bottom: 10px; min-height: 95vh; height: 95vh; box-shadow: 0 0 30px rgba(0,0,0,0.15); }
 
     @media (min-width: 768px) {
-        .container.adaptive { display: grid; grid-template-columns: 60% 40%; grid-template-rows: auto auto auto 1fr; grid-template-areas: "header header" "search search" "favs favs" "items cart"; }
-        .container.adaptive .header { grid-area: header; } .container.adaptive .search-bar { grid-area: search; } .container.adaptive .favorites-bar { grid-area: favs; }
+        .container.adaptive { display: grid; grid-template-columns: 60% 40%; grid-template-rows: auto auto 1fr; grid-template-areas: "header header" "favs favs" "items cart"; }
+        .container.adaptive .header { grid-area: header; } .container.adaptive .favorites-bar { grid-area: favs; }
         .container.adaptive .items-list { grid-area: items; max-height: 100%; overflow-y: auto; border-right: 2px solid #e0f7fa; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); grid-auto-rows: min-content; gap: 15px; align-content: start; }
         .container.adaptive .items-list .item { flex-direction: column; align-items: center; text-align: center; padding: 20px; height: auto; border-left: none; border-top: 4px solid #00bcd4; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .container.adaptive .items-list .item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); } .container.adaptive .items-list #searchTip { grid-column: 1 / -1; }
         .container.adaptive .cart { grid-area: cart; max-height: 100%; overflow-y: auto; background: #fdfdfd; border-top: none; box-shadow: -5px 0 15px rgba(0,0,0,0.03); }
     }
 
-    .header-btn, .search-btn, .scan-btn, .item, .qty-controls button, #completeSaleBtn, .inventory-controls button, .bill-controls button, .add-bill-btn, .date-filters button, .calc-button, #inventoryManagementPanel, #historyPanel, #notesPanel, #analysisPanel, #calculatorPanel, #paymentHistoryModal, #parkedSalesPanel, #shiftHistoryPanel, #productionPanel, #settingsPanel, #workersPanel, #rawMaterialsPanel, #creditsPanel, #tagsPanel { transition: all 0.3s ease-in-out; }
+    .header-btn, .item, .qty-controls button, #completeSaleBtn, .inventory-controls button, .bill-controls button, .add-bill-btn, .date-filters button, .calc-button, #inventoryManagementPanel, #historyPanel, #notesPanel, #analysisPanel, #calculatorPanel, #paymentHistoryModal, #parkedSalesPanel, #shiftHistoryPanel, #productionPanel, #settingsPanel, #workersPanel, #rawMaterialsPanel, #creditsPanel, #tagsPanel { transition: all 0.3s ease-in-out; }
     #inventoryManagementPanel, #historyPanel, #notesPanel, #analysisPanel, #calculatorPanel, #paymentHistoryModal, #parkedSalesPanel, #shiftHistoryPanel, #productionPanel, #settingsPanel, #workersPanel, #rawMaterialsPanel, #creditsPanel, #tagsPanel { background: #ffffff; position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: 100vh; z-index: 1000; display: none; box-sizing: border-box; padding: 15px; overflow-y: auto; color: #333; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
     .panel-open { transform: translateX(0) !important; }
     
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #00bcd4; padding-bottom: 10px; position: sticky; top: 0; background: #fff; z-index: 10; }
     .panel-header h4 { margin: 0; color: #00bcd4; } .panel-close-btn { background: #ff5722; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #e0f7fa; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-bottom: 3px solid #00bcd4; position: sticky; top: 0; z-index: 50; }
-    .header-controls { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
-    .header-btn { background: #00bcd4; border: none; color: white; font-size: 0.8em; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); white-space: nowrap; }
-    .header-btn:hover { background: #00acc1; transform: scale(1.05); } .calculator-header-btn { background: #ff5722; } .notes-btn { background: #4caf50; } .view-toggle-btn { background: #673ab7; }
-
-    .search-bar { display: flex; padding: 10px; background: #f5f5f5; border-bottom: 1px solid #ddd; position: sticky; top: 48px; z-index: 40; }
-    .search-bar input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px 0 0 8px; background: #fff; color: #333; }
-    .search-bar .search-btn { padding: 12px; border: none; background: #ffc107; color: #333; border-radius: 0 8px 8px 0; cursor: pointer; }
-    .search-bar .scan-btn { padding: 12px; border: none; background: #00bcd4; color: white; border-radius: 8px; margin-left: 8px; font-weight: bold; cursor: pointer; }
 
     .favorites-bar { background: #fff; padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
     .favorites-bar::-webkit-scrollbar { height: 4px; } .favorites-bar::-webkit-scrollbar-thumb { background: #00bcd4; border-radius: 10px; }
@@ -94,7 +113,7 @@
 
     .print-analysis-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .print-analysis-controls button { flex: 1 1 45%; padding: 10px; border-radius: 6px; border: none; color: white; font-size: 0.9em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    #calcBtnMobile { background: #ff5722; } #analysisBtn { background: #00bcd4; } #printBillBtn { background: #ffc107; color: #333;} #printTokenBtn { background: #4caf50; } #printLang1Btn { background: #e91e63; } #printLang2Btn { background: #9c27b0; } #suspendSaleBtn { background: #3f51b5; flex: 1 1 100%; } #recallSalesBtn { background: #f44336; }
+    #printBillBtn { background: #ffc107; color: #333;} #printTokenBtn { background: #4caf50; } #printLang1Btn { background: #e91e63; } #printLang2Btn { background: #9c27b0; } #suspendSaleBtn { background: #3f51b5; flex: 1 1 100%; }
 
     #completeSaleBtn { padding: 15px; margin-top: 10px; font-size: 1.2em; font-weight: bold; color: white; background: #4caf50; border: none; border-radius: 8px; box-shadow: 0 4px 0 #388e3c; cursor: pointer; transition: all 0.2s; }
     #completeSaleBtn:hover { background: #388e3c; transform: translateY(-1px); } #completeSaleBtn:disabled { background: #b0b0b0; cursor: not-allowed; box-shadow: none; border-bottom: none; }
@@ -146,6 +165,42 @@
 
 <div id="toastContainer"></div>
 
+<div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <span>VK POS Menu</span>
+        <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2em; cursor:pointer; color:#00bcd4;">✕</button>
+    </div>
+    
+    <button class="sidebar-btn shift-btn-start" id="sbStartShiftBtn" onclick="toggleSidebar(); startShift();">🚀 Start Shift</button>
+    <button class="sidebar-btn shift-btn-close" id="sbCloseShiftBtn" onclick="toggleSidebar(); closeShift();" disabled>🔒 Close Shift</button>
+    
+    <div style="background: #f0f0f0; height: 1px; margin: 10px 0;"></div>
+    
+    <button class="sidebar-btn" onclick="toggleLayout(); toggleSidebar();">🖥️ Toggle Desktop View</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('parkedSalesPanel')">📁 Parked Sales (<span id="parkedSalesCount">0</span>)</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('calculatorPanel')">🧮 Calculator</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('inventoryManagementPanel')">📦 Stock & Arrivals</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('historyPanel')">📜 Transaction History</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('shiftHistoryPanel')">📄 Shift History</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('notesPanel')">📝 Shop Notes & Expenses</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('creditsPanel')">📒 Customer Credits</button>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('tagsPanel')">🏷️ Price Tags</button>
+    
+    <div style="background: #f0f0f0; height: 1px; margin: 10px 0;"></div>
+    <div style="padding: 5px 20px; font-size: 0.75em; color: #aaa; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">SaaS Premium Tools</div>
+    
+    <button class="sidebar-btn premium-btn" onclick="checkPremiumAndOpen('analysisPanel')">📈 Analytics & Insights</button>
+    <button class="sidebar-btn premium-btn" onclick="checkPremiumAndOpen('productionPanel')">🏭 Production Report</button>
+    <button class="sidebar-btn premium-btn" onclick="checkPremiumAndOpen('workersPanel')">👷 Worker Attendance</button>
+    <button class="sidebar-btn premium-btn" onclick="checkPremiumAndOpen('rawMaterialsPanel')">🌾 Raw Materials</button>
+    
+    <div style="background: #f0f0f0; height: 1px; margin: 10px 0;"></div>
+    <button class="sidebar-btn" onclick="openPanelWithSidebar('settingsPanel')">⚙️ System Settings</button>
+    <button class="sidebar-btn" onclick="document.getElementById('subscriptionModal').style.display='flex'; toggleSidebar();" style="background: #fff3e0; color: #ff9800; border-left: 4px solid #ff9800;">⭐ Subscription / Billing</button>
+</div>
+
 <div id="cloudLoginOverlay" style="display: flex; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
     <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <h2 style="color: #00bcd4; margin-top: 0; margin-bottom: 5px;">VK POS Cloud ☁️</h2>
@@ -168,34 +223,18 @@
 <div class="watermark-ui">VK_INTERACTIVES</div>
 
 <div class="container" id="mainContainer">
+    
     <div class="header">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div id="mainHeaderTitle" style="font-weight: bold; font-size: 1.1em; color: #00bcd4;">VK POS</div>
-            <div id="cloudStatusBadge" style="background: #f44336; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.7em; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🔴 Local Mode</div>
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+        <div id="mainHeaderTitle">VK POS</div>
+        
+        <div class="header-search">
+            <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterItems()">
+            <button class="search-btn" onclick="filterItems()">🔍</button>
+            <button class="scan-btn" onclick="scanBarcode()">📸</button>
         </div>
-        <div class="header-controls">
-             <button class="header-btn view-toggle-btn" onclick="toggleLayout()">🖥️ View</button>
-             <button class="header-btn" onclick="togglePanel('tagsPanel')" style="background: #ff9800;">Tags 🏷️</button>
-             <button class="header-btn" onclick="togglePanel('creditsPanel')" style="background: #e91e63;">Credits 📒</button>
-             <button class="header-btn" onclick="togglePanel('settingsPanel')" style="background: #607d8b;">Settings ⚙️</button>
-             <button class="header-btn" id="startShiftBtn" onclick="startShift()" style="background: #4caf50;">Start Shift 🚀</button>
-             <button class="header-btn" id="closeShiftBtn" onclick="closeShift()" disabled style="background: #ff5722;">Close Shift 🔒</button>
-             <button class="header-btn calculator-header-btn" onclick="togglePanel('calculatorPanel')">Calc</button>
-             <button class="header-btn" onclick="togglePanel('analysisPanel')">Analysis</button>
-             <button class="header-btn" onclick="togglePanel('productionPanel')" style="background: #3f51b5;">Production 🏭</button>
-             <button class="header-btn notes-btn" onclick="togglePanel('notesPanel')">Notes</button>
-             <button class="header-btn" onclick="togglePanel('workersPanel')" style="background: #9c27b0;">Workers 👷</button>
-             <button class="header-btn" onclick="togglePanel('historyPanel')">History</button>
-             <button class="header-btn" onclick="togglePanel('inventoryManagementPanel')">Stock</button>
-             <button class="header-btn" onclick="togglePanel('rawMaterialsPanel')" style="background: #ff9800;">Raw Materials 🌾</button>
-             <button class="header-btn" onclick="togglePanel('shiftHistoryPanel')" style="background: #3f51b5;">Shifts 📄</button>
-        </div>
-    </div>
 
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search Items or Barcode..." onkeyup="filterItems()">
-        <button class="search-btn">🔍</button>
-        <button class="scan-btn" onclick="scanBarcode()">SCAN 📸</button>
+        <div id="cloudStatusBadge" style="background: #f44336; color: white; padding: 2px 6px; border-radius: 12px; font-size: 0.65em; font-weight: bold; white-space: nowrap;">🔴 Offline</div>
     </div>
 
     <div class="favorites-bar" id="favoritesBar"></div>
@@ -218,7 +257,7 @@
             </div>
             <div class="input-line">
                 <span style="font-weight: bold;">Money Received (₹):</span>
-                <input type="number" id="moneyReceived" value="" placeholder="0.00" oninput="calculateChange()" step="0.01" min="0">
+                <input type="number" id="moneyReceived" value="" placeholder="0.00" oninput="calculateChange()" step="0.01" min="0" onfocus="numpadTarget='moneyReceived'">
             </div>
             
             <div id="cartNumpad" style="display: none; flex-direction: column; gap: 5px; margin-top: 10px;">
@@ -241,8 +280,6 @@
             <button id="suspendSaleBtn" onclick="suspendSale()" disabled>Park/Suspend Sale ⏸️</button>
             <button id="completeSaleBtn" onclick="handleCompleteSaleClick()" disabled>Complete Sale</button>
             <div class="print-analysis-controls">
-                <button id="calcBtnMobile" onclick="togglePanel('calculatorPanel')">Calc 🧮</button>
-                <button id="recallSalesBtn" onclick="togglePanel('parkedSalesPanel')">Recall Parked Sales (<span id="parkedSalesCount">0</span>) 📁</button>
                 <button id="printBillBtn" onclick="printLastTransaction('bill')">Print Bill 🖨️</button>
                 <button id="printTokenBtn" onclick="printLastTransaction('token')">Print Token 🎫</button>
                 <button id="printLang1Btn" onclick="printLastTransaction('billLang1')">Print Bill (Tamil) 🖨️</button>
@@ -273,24 +310,43 @@
         <label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em; color:#ff5722;">Cart Options:</label>
         <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; background: #ffe0b2; padding: 10px; border-radius: 6px; border: 1px solid #ff9800;">
             <input type="checkbox" id="settingsNumPad" style="width: 18px; height: 18px;">
-            <b>Show On-Screen Numpad for Cash Entry</b>
+            <b>Show On-Screen Numpad for Cash/Qty Entry</b>
         </label>
         
         <h5 style="color: #607d8b;">🏢 Business Profile (Receipt Data)</h5>
         <label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Company Logo:</label><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;"><input type="file" id="settingsLogoInput" accept="image/*" onchange="previewLogo(event)" style="flex: 1;"><button onclick="clearLogo()" style="padding: 10px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Remove</button></div><div style="text-align: center; margin-bottom: 15px;"><img id="settingsLogoPreview" src="" alt="Logo Preview" style="max-width: 120px; max-height: 80px; display: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px;"></div><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Logo Print Size:</label><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;"><input type="range" id="settingsLogoSize" min="40" max="250" value="100" style="flex: 1;" oninput="document.getElementById('logoSizeDisplay').innerText = this.value + 'px'"><span id="logoSizeDisplay" style="font-weight: bold; min-width: 50px;">100px</span></div><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Receipt Font:</label><select id="settingsFont" style="width: 100%; margin-bottom: 10px; padding: 8px;"><option value="'Courier New', monospace">Courier New (Standard POS)</option><option value="monospace">Monospace</option><option value="'Segoe UI', sans-serif">Segoe UI</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="'Trebuchet MS', sans-serif">Trebuchet MS</option><option value="Impact, sans-serif">Impact (Bold)</option><option value="'Comic Sans MS', cursive">Comic Sans (Fun)</option></select><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Business Name:</label><input type="text" id="settingsCompanyName" placeholder="e.g. My Awesome Shop" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Phone Number:</label><input type="text" id="settingsPhone" placeholder="e.g. +91 9876543210" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Email Address:</label><input type="email" id="settingsEmail" placeholder="e.g. contact@shop.com" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Physical Address:</label><input type="text" id="settingsAddress" placeholder="e.g. 123 Street, City" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">License / Tax ID:</label><input type="text" id="settingsLicense" placeholder="e.g. GSTIN 123456789" style="width: 100%; margin-bottom: 10px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em; margin-top: 15px; color: #e91e63;">Social Media Handles:</label><input type="text" id="settingsInsta" placeholder="Instagram (e.g. @my_shop)" style="width: 100%; margin-bottom: 10px;"><input type="text" id="settingsFB" placeholder="Facebook (e.g. fb.com/myshop)" style="width: 100%; margin-bottom: 15px;"><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Custom Tagline (Footer):</label><input type="text" id="settingsTagline" placeholder="Where Every Journey Holds a Secret" style="width: 100%; margin-bottom: 15px;"><h5 style="color: #607d8b; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px;">🌍 Multi-Language Print Settings</h5><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Print Button 1 Language:</label><select id="settingsLang1" style="width: 100%; margin-bottom: 10px; padding: 8px;"><option value="ta">Tamil (தமிழ்)</option><option value="hi">Hindi (हिंदी)</option><option value="en">English</option><option value="es">Spanish (Español)</option><option value="ar">Arabic (عربي)</option><option value="fr">French (Français)</option></select><label style="font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9em;">Print Button 2 Language:</label><select id="settingsLang2" style="width: 100%; margin-bottom: 15px; padding: 8px;"><option value="hi">Hindi (हिंदी)</option><option value="ta">Tamil (தமிழ்)</option><option value="en">English</option><option value="es">Spanish (Español)</option><option value="ar">Arabic (عربي)</option><option value="fr">French (Français)</option></select><h5 style="color: #607d8b; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px;">🖨️ Shift Report Print Toggles</h5><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f0f8ff; padding: 15px; border-radius: 8px;"><label><input type="checkbox" id="setSrSales"> Show Sales Summary</label><label><input type="checkbox" id="setSrExp"> Show Expenses</label><label><input type="checkbox" id="setSrAtt"> Show Attendance</label><label><input type="checkbox" id="setSrStock"> Show Closing Stock</label><label><input type="checkbox" id="setSrArr"> Show New Arrivals</label><label><input type="checkbox" id="setSrChart"> Show Daily Chart</label></div>
         <button onclick="saveSettings()" style="width: 100%; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 6px; font-weight: bold; cursor:pointer;">Save Settings 💾</button>
-        <div class="software-info-box"><h6>Software Information</h6><div class="software-info-row"><span>Version</span><span style="font-weight:bold;">v15.4.0-TrueCloud</span></div><div class="software-info-row"><span>Developer</span><span><a href="https://vkinteractives.com" target="_blank" class="software-link">Vkinteractives.com</a></span></div><div class="software-info-row"><span>System Status</span><span style="color: #00bcd4; font-weight: bold;">Google Cloud Sync Active</span></div><div style="margin-top: 15px; font-size: 0.75em; color: #bbb;">© 2026 VK_INTERACTIVES. All Rights Reserved.</div><button onclick="logoutOfCloud()" style="width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px;">Logout of Cloud 🔒</button></div>
+        <div class="software-info-box"><h6>Software Information</h6><div class="software-info-row"><span>Version</span><span style="font-weight:bold; color: #e91e63;">v16.3.0-SaaS PRO</span></div><div class="software-info-row"><span>Developer</span><span><a href="https://vkinteractives.com" target="_blank" class="software-link">Vkinteractives.com</a></span></div><div class="software-info-row"><span>System Status</span><span style="color: #00bcd4; font-weight: bold;">Google Cloud Sync Active</span></div><div style="margin-top: 15px; font-size: 0.75em; color: #bbb;">© 2026 VK_INTERACTIVES. All Rights Reserved.</div><button onclick="logoutOfCloud()" style="width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px;">Logout of Cloud 🔒</button></div>
+    </div>
+</div>
+
+<div id="subscriptionModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:10000000; justify-content:center; align-items:center; backdrop-filter: blur(5px);">
+    <div style="background:#fff; width:90%; max-width:450px; border-radius:12px; padding:30px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.2);">
+        <h2 style="color:#e91e63; margin-top:0;">Unlock True Power 🚀</h2>
+        <p style="color:#555; margin-bottom: 20px;">You are currently on the <b>Free Plan</b>. Upgrade to PRO to access Advanced Analytics, Worker Tracking, Raw Materials, and Production Reports.</p>
+        
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 2px solid #ff9800; margin-bottom: 20px;">
+            <h3 style="margin:0 0 10px 0; color: #ff9800;">PRO Plan - ₹999 / Month</h3>
+            <ul style="text-align:left; font-size: 0.95em; color:#444; line-height: 1.6; list-style: none; padding-left: 10px;">
+                <li>✅ True Cloud Sync across all devices</li>
+                <li>✅ Advanced Analytics & AI Insights</li>
+                <li>✅ Worker Attendance & Wage Tracking</li>
+                <li>✅ Raw Materials Inventory Control</li>
+                <li>✅ Daily Production Reporting</li>
+            </ul>
+        </div>
+        
+        <button onclick="initiateRazorpayPayment()" style="width:100%; padding:15px; background:#4caf50; color:white; border:none; border-radius:8px; font-size: 1.2em; font-weight:bold; cursor:pointer; margin-bottom: 10px; transition: transform 0.2s;">Pay via Razorpay 💳</button>
+        <button onclick="document.getElementById('subscriptionModal').style.display='none'" style="width:100%; padding:10px; background:#eee; color:#555; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Maybe Later</button>
     </div>
 </div>
 
 <div id="updatesModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:10001; justify-content:center; align-items:center; backdrop-filter: blur(3px);">
     <div style="background:#fff; width:90%; max-width:400px; border-radius:12px; padding:25px; box-shadow:0 15px 35px rgba(0,0,0,0.2); max-height:85vh; overflow-y:auto; position:relative;">
-        <h3 style="color:#03a9f4; margin-top:0; border-bottom:2px solid #e0f7fa; padding-bottom:10px;">🚀 What's New in v15.4</h3>
+        <h3 style="color:#03a9f4; margin-top:0; border-bottom:2px solid #e0f7fa; padding-bottom:10px;">🚀 What's New in v16.3 (Ultra Slim)</h3>
         <ul style="padding-left: 20px; color:#444; font-size:0.95em; line-height:1.6;">
-            <li style="margin-bottom: 8px;"><b>History Restored:</b> The missing history panel is fully back online.</li>
-            <li style="margin-bottom: 8px;"><b>Smart Printing:</b> Hitting "Print" now accurately prints your CURRENT cart instead of previous items.</li>
-            <li style="margin-bottom: 8px;"><b>QTY Numpad Toggle:</b> Switch the numpad to QTY Mode to rapidly type in bulk item quantities!</li>
-            <li style="margin-bottom: 8px;"><b>Live Shift Sync:</b> Starting a shift now syncs instantly across all devices.</li>
+            <li style="margin-bottom: 8px;"><b>Unified Header:</b> The Search Bar has been merged perfectly into the top row to give you maximum grid space.</li>
+            <li style="margin-bottom: 8px;"><b>Smart Mobile Layout:</b> The app title subtly hides on small screens to ensure your search bar is always wide and easy to tap.</li>
         </ul>
         <button onclick="document.getElementById('updatesModal').style.display='none'" style="width:100%; padding:12px; background:#f44336; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:15px;">Awesome, Let's Go!</button>
     </div>
@@ -313,7 +369,7 @@
 
 <script>
 // =======================================================
-// 1. PROFESSIONAL TOAST SYSTEM
+// 1. PROFESSIONAL TOAST SYSTEM & SIDEBAR LOGIC
 // =======================================================
 function showToast(msg, type='info') {
     const container = document.getElementById('toastContainer');
@@ -322,6 +378,49 @@ function showToast(msg, type='info') {
     toast.innerText = msg;
     container.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3000);
+}
+
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    if(sb.classList.contains('open')) {
+        sb.classList.remove('open');
+        ov.style.display = 'none';
+    } else {
+        sb.classList.add('open');
+        ov.style.display = 'block';
+    }
+}
+
+function openPanelWithSidebar(panelId) {
+    toggleSidebar();
+    togglePanel(panelId);
+}
+
+function checkPremiumAndOpen(panelId) {
+    toggleSidebar();
+    if(businessProfile.subscriptionStatus === 'PRO') {
+        togglePanel(panelId);
+    } else {
+        document.getElementById('subscriptionModal').style.display='flex';
+    }
+}
+
+function initiateRazorpayPayment() {
+    showToast("Connecting to Secure Gateway...", "info");
+    const btn = document.querySelector('#subscriptionModal button');
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        alert("TEST MODE: This is where the Razorpay checkout window will open once connected to the Node.js backend.\n\nFor now, the system will simulate a successful payment and instantly upgrade your account to PRO.");
+        businessProfile.subscriptionStatus = 'PRO';
+        saveSettings();
+        document.getElementById('subscriptionModal').style.display='none';
+        btn.innerText = "Pay via Razorpay 💳";
+        btn.disabled = false;
+        showToast("🎉 Welcome to VK POS Premium!", "success");
+    }, 1500);
 }
 
 // =======================================================
@@ -350,12 +449,11 @@ let db = null; let auth = null; let storage = null;
 function updateCloudBadge(isConnected, email = "", errorMessage = "") {
     const badge = document.getElementById('cloudStatusBadge'); if(!badge) return;
     if(isConnected) { 
-        const displayEmail = email ? email.split('@')[0] : 'User';
         badge.style.background = "#4caf50"; 
-        badge.innerHTML = `🟢 LIVE SYNC <span style="font-weight:normal; font-size:0.9em;">(${displayEmail})</span>`; 
+        badge.innerHTML = `🟢 Sync`; 
     } else { 
         badge.style.background = "#f44336"; 
-        badge.innerHTML = `🔴 OFFLINE ${errorMessage ? '- ' + errorMessage : ''}`; 
+        badge.innerHTML = `🔴 Offline`; 
     }
 }
 
@@ -505,8 +603,9 @@ let currentInput = '0'; let result = ''; let isCalculated = false; let saleTapCo
 // NUMPAD VARS
 let npMode = 'CASH'; 
 let npTypedQty = "";
+let numpadTarget = 'moneyReceived';
 
-let businessProfile = { companyName: "VK POS", phone: "", email: "", address: "", license: "", tagline: "Where Every Journey Holds a Secret", logo: "", logoSize: 100, receiptFont: "'Courier New', monospace", itemView: 'text', instagram: "", facebook: "", lang1: "ta", lang2: "hi", srSales: true, srExp: true, srAtt: true, srStock: true, srArr: true, srChart: true, numPadEnabled: false };
+let businessProfile = { companyName: "VK POS", phone: "", email: "", address: "", license: "", tagline: "Where Every Journey Holds a Secret", logo: "", logoSize: 100, receiptFont: "'Courier New', monospace", itemView: 'text', instagram: "", facebook: "", lang1: "ta", lang2: "hi", srSales: true, srExp: true, srAtt: true, srStock: true, srArr: true, srChart: true, numPadEnabled: false, subscriptionStatus: 'FREE' };
 const langNames = { 'en': 'English', 'ta': 'Tamil', 'hi': 'Hindi', 'es': 'Spanish', 'ar': 'Arabic', 'fr': 'French' };
 const posTranslations = { 'en': { receipt: "Receipt", mode: "Mode", total: "TOTAL", thankYou: "Thank You!" }, 'ta': { receipt: "ரசீது", mode: "முறை", total: "மொத்தம்", thankYou: "நன்றி!" }, 'hi': { receipt: "रसीद", mode: "मोड", total: "कुल", thankYou: "धन्यवाद!" } };
 
@@ -540,6 +639,10 @@ function loadData() {
     loadLayoutPreference();
     const storedProfile = localStorage.getItem('posBusinessProfile');
     if (storedProfile) { businessProfile = { ...businessProfile, ...JSON.parse(storedProfile) }; document.documentElement.style.setProperty('--receipt-font', businessProfile.receiptFont); toggleNumpadUI(); }
+    
+    // Ensure legacy users have a sub status
+    if(!businessProfile.subscriptionStatus) businessProfile.subscriptionStatus = 'FREE';
+    
     updateHeaderTitle(); 
     
     const tryLoad = (key, defaultVal) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : defaultVal; } catch(e) { return defaultVal; } };
@@ -661,7 +764,6 @@ function numpadClear() {
 }
 
 function updateCartQuiet() {
-    // Standard update without resetting typed QTY
     const cartItems = document.getElementById('cartItems'); cartItems.innerHTML = ''; let grandTotal = 0;
     cart.forEach((item, index) => {
         const subTotal = parseFloat(item.price) * item.quantity; grandTotal += subTotal;
@@ -1080,17 +1182,41 @@ function closeShift() {
     
     shifts.push(shiftEnd); pushToCloud('posShifts', shiftEnd);
     
+    // Auto-Wipe Cloud & Local Collections for the next shift to be totally clean
     if(auth && auth.currentUser) {
         db.collection("users").doc(auth.currentUser.uid).collection("posLive").doc("currentShift").delete();
+        newArrivalsLog.forEach(log => { if(log.docId) deleteFromCloud('posNewArrivalsLog', log.docId); });
+        attendanceLog.forEach(log => { if(log.docId) deleteFromCloud('posAttendanceLog', log.docId); });
     }
-    currentShift = null; localStorage.removeItem('posCurrentShift'); updateShiftButtons(); document.getElementById('overrideUpiCheckbox').checked = false; document.getElementById('manualUpiInput').value = '';
     
-    printShiftReport(shiftEnd); if (document.getElementById('notesPanel').classList.contains('panel-open')) renderNotesPanel(); showToast(`🔒 Shift #${shiftEnd.id} closed and pushed to cloud.`, "success");
+    newArrivalsLog = [];
+    attendanceLog = [];
+    currentShift = null; 
+    
+    saveData();
+    localStorage.removeItem('posCurrentShift'); 
+    updateShiftButtons(); 
+    document.getElementById('overrideUpiCheckbox').checked = false; 
+    document.getElementById('manualUpiInput').value = '';
+    
+    printShiftReport(shiftEnd); 
+    if (document.getElementById('notesPanel').classList.contains('panel-open')) renderNotesPanel(); 
+    if (document.getElementById('workersPanel').classList.contains('panel-open')) renderWorkersPanel();
+    
+    showToast(`🔒 Shift #${shiftEnd.id} closed and memory wiped for next shift!`, "success");
 }
 
 function updateShiftButtons() {
-    const startBtn = document.getElementById('startShiftBtn'); const closeBtn = document.getElementById('closeShiftBtn');
-    if (currentShift) { startBtn.disabled = true; startBtn.innerText = `Shift #${currentShift.id} Active`; closeBtn.disabled = false; } else { startBtn.disabled = false; startBtn.innerText = `Start Shift 🚀`; closeBtn.disabled = true; }
+    const sbStartBtn = document.getElementById('sbStartShiftBtn');
+    const sbCloseBtn = document.getElementById('sbCloseShiftBtn');
+
+    if (currentShift) { 
+        if(sbStartBtn) { sbStartBtn.disabled = true; sbStartBtn.innerHTML = `🚀 Shift #${currentShift.id} Active`; }
+        if(sbCloseBtn) { sbCloseBtn.disabled = false; }
+    } else { 
+        if(sbStartBtn) { sbStartBtn.disabled = false; sbStartBtn.innerHTML = `🚀 Start Shift`; }
+        if(sbCloseBtn) { sbCloseBtn.disabled = true; }
+    }
 }
 
 function renderNotesPanel() { document.getElementById('billsList').innerHTML = shopNotes.map(b => `<div class="bill-card"><div><b>${b.description}</b> <span>₹${b.total}</span></div><div>Paid: ₹${b.paid}</div></div>`).join(''); document.getElementById('dailyPayLog').innerHTML = dailyPayNotes.filter(n=>new Date(n.timestamp).toDateString()===new Date().toDateString()).map(n=>`<div class="daily-pay-record" style="border-left-color:${n.type==='PayIn'?'#4caf50':'#d32f2f'}"><span>${n.description}</span><span>${n.type==='PayIn'?'+':'-'} ${n.amount}</span></div>`).join(''); }
